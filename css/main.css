@@ -1,0 +1,196 @@
+ :root {
+     --gap: 16px;
+     --border: #dfe6ef;
+     --card-bg: #f8f9fb;
+     --radius: 10px;
+     --pad: 16px;
+ }
+
+ body {
+     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+     background: #fff;
+     color: #111;
+     margin: 24px;
+ }
+
+ .container {
+     display: flex;
+     align-items: flex-start;
+     gap: 30px;
+     max-width: 1200px;
+     margin: 0 auto;
+     background: var(--card-bg);
+     padding: var(--pad);
+     border-radius: var(--radius);
+     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+     border: 1px solid var(--border);
+ }
+
+ .foto-container {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 20px;
+ }
+
+ .foto {
+     width: 160px;
+     height: 160px;
+     border-radius: 50%;
+     overflow: hidden;
+     border: 4px solid white;
+     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+     background: #ccc;
+     position: relative;
+     cursor: pointer;
+ }
+
+ .foto img {
+     width: 100%;
+     height: 100%;
+     object-fit: cover;
+ }
+
+ .foto input[type="file"] {
+     display: none;
+ }
+
+ .cambiar-foto-btn {
+     background: #2563eb;
+     color: white;
+     border: none;
+     padding: 8px 12px;
+     border-radius: 6px;
+     font-size: 0.9rem;
+     cursor: pointer;
+     transition: background 0.2s ease;
+ }
+
+ .cambiar-foto-btn:hover {
+     background: #1e4ed8;
+ }
+
+ .contenido {
+     flex: 1;
+     display: flex;
+     flex-direction: column;
+     gap: 16px;
+ }
+
+ h1 {
+     margin: 0;
+     font-size: 1.5rem;
+ }
+
+ form {
+     display: grid;
+     grid-template-columns: repeat(3, 1fr);
+     gap: var(--gap);
+ }
+
+ fieldset {
+     border: 1px solid var(--border);
+     border-radius: 8px;
+     background: white;
+     padding: 12px;
+ }
+
+ legend {
+     font-weight: 600;
+     padding: 0 6px;
+ }
+
+ label {
+     display: block;
+     font-size: 0.9rem;
+     margin-bottom: 6px;
+ }
+
+ .input-row {
+     display: flex;
+     align-items: center;
+     /* Centra verticalmente label e input */
+     margin-bottom: 8px;
+     gap: 8px;
+     /* Espacio entre label y input */
+ }
+
+ .input-row label {
+     width: 100px;
+     /* Ancho fijo del label */
+     font-size: 0.85rem;
+     margin-bottom: 0;
+     /* Quitamos margen inferior */
+ }
+
+ .input-row input,
+ .input-row select {
+     flex: 1;
+     /* Ocupa el resto del espacio */
+     padding: 6px;
+     /* Reducimos un poco el padding */
+     font-size: 0.85rem;
+     /* Achicamos el texto */
+ }
+
+
+ input,
+ select {
+     width: 100%;
+     padding: 8px;
+     border: 1px solid var(--border);
+     border-radius: 6px;
+     font-size: 0.95rem;
+     box-sizing: border-box;
+ }
+
+ .acciones {
+     grid-column: 1 / -1;
+     display: flex;
+     justify-content: flex-end;
+     gap: 10px;
+     margin-top: 10px;
+ }
+
+ button {
+     padding: 10px 16px;
+     border-radius: 8px;
+     border: none;
+     cursor: pointer;
+     font-weight: 600;
+ }
+
+ .btn-primary {
+     background: #2563eb;
+     color: white;
+ }
+
+ .btn-secondary {
+     background: transparent;
+     border: 1px solid var(--border);
+     color: #111;
+ }
+
+ @media (max-width: 700px) {
+     .container {
+         flex-direction: column;
+         align-items: center;
+     }
+
+     .foto {
+         width: 120px;
+         height: 120px;
+     }
+
+     form {
+         grid-template-columns: 1fr;
+     }
+
+     .acciones {
+         flex-direction: column-reverse;
+     }
+
+     button {
+         width: 100%;
+     }
+ }

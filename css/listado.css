@@ -1,0 +1,90 @@
+/* Reset y estilo base */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+/* Contenedor centrado de la tabla */
+.table-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 40px;
+}
+
+/* Tabla */
+table {
+    width: 95%;
+    /* Ocupa el 95% del ancho de la pantalla */
+    border-collapse: collapse;
+    background: white;
+    text-align: center;
+    border: 2px solid #000;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    font-size: 0.8em;
+}
+
+/* Encabezados y celdas */
+th,
+td {
+    border: 1px solid #555;
+    padding: 8px 12px;
+}
+
+/* Encabezado */
+thead {
+    background-color: #333;
+    color: #fff;
+}
+
+/* Filas */
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+tr:hover {
+    background-color: #e0e0e0;
+}
+
+/* Imagen mini */
+img.mini {
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+}
+
+/* Texto tachado */
+td.nombre-libre {
+    text-decoration: line-through;
+    color: #888;
+}
+
+/* Botones */
+.btn {
+    display: inline-block;
+    padding: 5px 10px;
+    font-size: 0.9em;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-success {
+    background-color: #28a745;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
