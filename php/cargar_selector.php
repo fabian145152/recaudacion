@@ -42,7 +42,7 @@ $sql = "
         v.marca,
         v.modelo,
         v.dominio,
-                COALESCE((
+        COALESCE((
             SELECT SUM(monto) FROM cuenta_corriente 
             WHERE chofer_id = c.id AND fecha <= ? 
             AND descripcion NOT LIKE '%Pago cuota%'
@@ -93,12 +93,13 @@ while ($o = $res_obs->fetch_assoc()) {
 }
 $stmt_obs->close();
 
-// === OBTENER PRÉSTAMOS ACTIVOS ===
+// === OBTENER PRÉSTAMOS ACTIVOS (Con subconsulta para el total pagado) ===
 $prestamos_por_chofer = [];
 $res_prestamos = $con->query("
-    SELECT id, chofer_id, valor_cuota, estado, estado_mora, cuotas, cuotas_pagas 
-    FROM prestamos 
-    WHERE estado = 'ACTIVO'
+    SELECT pr.id, pr.chofer_id, pr.valor_cuota, pr.monto_total, pr.cuotas, pr.cuotas_pagas, pr.estado, pr.estado_mora,
+           COALESCE((SELECT SUM(monto) FROM prestamos_pagos WHERE prestamo_id = pr.id), 0) AS total_pagado
+    FROM prestamos pr
+    WHERE pr.estado = 'ACTIVO'
 ");
 if ($res_prestamos) {
     while ($pr = $res_prestamos->fetch_assoc()) {
@@ -358,7 +359,6 @@ $con->close();
             color: #004085;
         }
 
-        /* ESTILOS NUEVOS PARA PRÉSTAMOS */
         .prestamo-badge {
             display: inline-block;
             padding: 1px 7px;
@@ -415,8 +415,6 @@ $con->close();
             color: #721c24;
             border-color: #dc3545;
         }
-
-        /* FIN ESTILOS PRÉSTAMOS */
 
         .recauda-hoy {
             background: #f8f9fc;
@@ -554,7 +552,6 @@ $con->close();
             margin-left: auto;
         }
 
-        /* === OBSERVACIONES === */
         .observacion-container {
             margin-top: 6px;
             padding-top: 6px;
@@ -718,11 +715,7 @@ $con->close();
     <?php include "menu.php"; ?>
 
     <div class="page-wrapper">
-
-        <h1 class="page-title">
-            <i class="fas fa-dollar-sign"></i>
-            Cargar Recaudación
-        </h1>
+        <h1 class="page-title"><i class="fas fa-dollar-sign"></i> Cargar Recaudación</h1>
         <p class="subtitle">Elegí el chofer y la fecha del movimiento</p>
 
         <div class="fecha-filtro-container">
@@ -730,39 +723,24 @@ $con->close();
                 <?php if ($es_nueva_pestana): ?>
                     <input type="hidden" name="nueva" value="1">
                 <?php endif; ?>
-                <label for="fecha">
-                    <i class="fas fa-calendar-alt"></i> Fecha:
-                </label>
-                <input type="date" id="fecha" name="fecha"
-                    value="<?php echo htmlspecialchars($fecha_filtro); ?>"
-                    max="<?php echo date('Y-m-d'); ?>"
-                    onchange="this.form.submit()">
+                <label for="fecha"><i class="fas fa-calendar-alt"></i> Fecha:</label>
+                <input type="date" id="fecha" name="fecha" value="<?php echo htmlspecialchars($fecha_filtro); ?>" max="<?php echo date('Y-m-d'); ?>" onchange="this.form.submit()">
             </form>
 
             <?php if ($es_hoy): ?>
-                <span class="badge-fecha-actual">
-                    <i class="fas fa-calendar-day"></i> Hoy · <?php echo $fecha_mostrar; ?>
-                </span>
+                <span class="badge-fecha-actual"><i class="fas fa-calendar-day"></i> Hoy · <?php echo $fecha_mostrar; ?></span>
             <?php elseif ($es_ayer): ?>
-                <span class="badge-fecha-actual" style="background: linear-gradient(135deg, #6c757d, #495057);">
-                    <i class="fas fa-calendar-minus"></i> Ayer · <?php echo $fecha_mostrar; ?>
-                </span>
+                <span class="badge-fecha-actual" style="background: linear-gradient(135deg, #6c757d, #495057);"><i class="fas fa-calendar-minus"></i> Ayer · <?php echo $fecha_mostrar; ?></span>
             <?php else: ?>
-                <span class="badge-fecha-actual" style="background: linear-gradient(135deg, #17a2b8, #0dcaf0);">
-                    <i class="fas fa-calendar"></i> <?php echo $fecha_mostrar; ?>
-                </span>
+                <span class="badge-fecha-actual" style="background: linear-gradient(135deg, #17a2b8, #0dcaf0);"><i class="fas fa-calendar"></i> <?php echo $fecha_mostrar; ?></span>
             <?php endif; ?>
 
             <?php if (!$es_hoy): ?>
-                <a href="cargar_selector.php<?php echo $es_nueva_pestana ? '?nueva=1' : ''; ?>" class="btn-fecha btn-hoy">
-                    <i class="fas fa-calendar-day"></i> Ver hoy
-                </a>
+                <a href="cargar_selector.php<?php echo $es_nueva_pestana ? '?nueva=1' : ''; ?>" class="btn-fecha btn-hoy"><i class="fas fa-calendar-day"></i> Ver hoy</a>
             <?php endif; ?>
 
             <?php if (!$es_ayer): ?>
-                <a href="cargar_selector.php?fecha=<?php echo date('Y-m-d', strtotime('-1 day')); ?><?php echo $param_nueva; ?>" class="btn-fecha btn-ayer">
-                    <i class="fas fa-calendar-minus"></i> Ver ayer
-                </a>
+                <a href="cargar_selector.php?fecha=<?php echo date('Y-m-d', strtotime('-1 day')); ?><?php echo $param_nueva; ?>" class="btn-fecha btn-ayer"><i class="fas fa-calendar-minus"></i> Ver ayer</a>
             <?php endif; ?>
         </div>
 
@@ -798,19 +776,23 @@ $con->close();
                     $tiene_prestamo = !empty($prestamos_chofer);
                     $tiene_mora = false;
                     $valor_cuota_mostrar = 0;
+                    $deuda_prestamo = 0;
 
                     if ($tiene_prestamo) {
-                        // Buscamos si alguno de sus préstamos activos está en mora
                         foreach ($prestamos_chofer as $pr) {
+                            // AHORA LA DEUDA SE CALCULA CON EL TOTAL PAGADO REAL
+                            $deuda_real = floatval($pr['monto_total']) - floatval($pr['total_pagado']);
+
                             if ($pr['estado_mora'] === 'EN MORA') {
                                 $tiene_mora = true;
-                                $valor_cuota_mostrar = floatval($pr['valor_cuota']); // Guardamos la cuota del que está en mora
+                                $valor_cuota_mostrar = floatval($pr['valor_cuota']);
+                                $deuda_prestamo = $deuda_real;
                                 break;
                             }
                         }
-                        // Si ninguno está en mora, mostramos el valor del primero que encontremos
                         if (!$tiene_mora) {
                             $valor_cuota_mostrar = floatval($prestamos_chofer[0]['valor_cuota']);
+                            $deuda_prestamo = floatval($prestamos_chofer[0]['monto_total']) - floatval($prestamos_chofer[0]['total_pagado']);
                         }
                     }
                 ?>
@@ -834,16 +816,11 @@ $con->close();
                                                 <?php echo htmlspecialchars($c['turno']); ?>
                                             </span>
                                         <?php else: ?>
-                                            <span class="sin-auto-badge">
-                                                <i class="fas fa-exclamation-triangle"></i> Sin auto
-                                            </span>
+                                            <span class="sin-auto-badge"><i class="fas fa-exclamation-triangle"></i> Sin auto</span>
                                         <?php endif; ?>
 
                                         <?php if ($tieneRecauda): ?>
-                                            <span class="cargado-hoy">
-                                                <i class="fas fa-check"></i>
-                                                <?php echo $es_hoy ? 'Hoy' : ($es_ayer ? 'Ayer' : $fecha_mostrar); ?>
-                                            </span>
+                                            <span class="cargado-hoy"><i class="fas fa-check"></i> <?php echo $es_hoy ? 'Hoy' : ($es_ayer ? 'Ayer' : $fecha_mostrar); ?></span>
                                         <?php endif; ?>
 
                                         <?php if ($tiene_prestamo): ?>
@@ -857,154 +834,141 @@ $con->close();
 
                             <?php if ($tieneRecauda): ?>
                                 <div class="recauda-hoy">
-                                    <div class="recauda-titulo">
-                                        <?php echo $titulo_recauda; ?>
-                                    </div>
-
+                                    <div class="recauda-titulo"><?php echo $titulo_recauda; ?></div>
                                     <div class="recauda-fila fila-abono">
                                         <span class="etiqueta"><i class="fas fa-file-invoice-dollar"></i> Abono diario:</span>
                                         <span class="valor">$<?php echo number_format($abono_diario, 0, ',', '.'); ?></span>
                                     </div>
-
                                     <div class="recauda-fila">
                                         <span class="etiqueta"><i class="fas fa-hand-holding-usd"></i> Depósito del chofer:</span>
                                         <span class="valor">$<?php echo number_format($deposito, 0, ',', '.'); ?></span>
                                     </div>
 
                                     <?php if ($debe > 0.001): ?>
-                                        <div class="resultado-dia resultado-deuda">
-                                            <span><i class="fas fa-exclamation-circle icono"></i> DEUDA DEL DÍA</span>
-                                            <span>-$<?php echo number_format($debe, 0, ',', '.'); ?></span>
-                                        </div>
+                                        <div class="resultado-dia resultado-deuda"><span><i class="fas fa-exclamation-circle icono"></i> DEUDA DEL DÍA</span><span>-$<?php echo number_format($debe, 0, ',', '.'); ?></span></div>
                                     <?php elseif ($debe < -0.001): ?>
-                                        <div class="resultado-dia resultado-favor">
-                                            <span><i class="fas fa-check-circle icono"></i> A FAVOR DEL DÍA</span>
-                                            <span>+$<?php echo number_format(abs($debe), 0, ',', '.'); ?></span>
-                                        </div>
+                                        <div class="resultado-dia resultado-favor"><span><i class="fas fa-check-circle icono"></i> A FAVOR DEL DÍA</span><span>+$<?php echo number_format(abs($debe), 0, ',', '.'); ?></span></div>
                                     <?php else: ?>
-                                        <div class="resultado-dia resultado-neutro">
-                                            <span><i class="fas fa-check icono"></i> AL DÍA</span>
-                                            <span>$0</span>
-                                        </div>
+                                        <div class="resultado-dia resultado-neutro"><span><i class="fas fa-check icono"></i> AL DÍA</span><span>$0</span></div>
                                     <?php endif; ?>
                                 </div>
                             <?php else: ?>
-                                <div class="sin-recauda">
-                                    <i class="fas fa-inbox"></i>
-                                    <?php echo $aviso_sin; ?>
-                                </div>
+                                <div class="sin-recauda"><i class="fas fa-inbox"></i> <?php echo $aviso_sin; ?></div>
                             <?php endif; ?>
 
                             <div class="estado-chofer">
                                 <?php if ($saldo < 0): ?>
-                                    <div class="estado-badge estado-deuda">
-                                        <i class="fas fa-exclamation-circle"></i>
-                                        <span>Deuda desde el <?php echo !empty($fecha_deuda) ? date('d/m/Y', strtotime($fecha_deuda)) : '—'; ?></span>
-                                        <span class="estado-monto">-$<?php echo number_format(abs($saldo), 0, ',', '.'); ?></span>
-                                    </div>
+                                    <div class="estado-badge estado-deuda"><i class="fas fa-exclamation-circle"></i><span>Deuda desde el <?php echo !empty($fecha_deuda) ? date('d/m/Y', strtotime($fecha_deuda)) : '—'; ?></span><span class="estado-monto">-$<?php echo number_format(abs($saldo), 0, ',', '.'); ?></span></div>
                                 <?php elseif ($saldo > 0): ?>
-                                    <div class="estado-badge estado-favor">
-                                        <i class="fas fa-check-circle"></i>
-                                        <span>Saldo a favor</span>
-                                        <span class="estado-monto">+$<?php echo number_format($saldo, 0, ',', '.'); ?></span>
-                                    </div>
+                                    <div class="estado-badge estado-favor"><i class="fas fa-check-circle"></i><span>Saldo a favor</span><span class="estado-monto">+$<?php echo number_format($saldo, 0, ',', '.'); ?></span></div>
                                 <?php else: ?>
-                                    <div class="estado-badge estado-aldia">
-                                        <i class="fas fa-check"></i>
-                                        <span>Al día</span>
-                                    </div>
+                                    <div class="estado-badge estado-aldia"><i class="fas fa-check"></i><span>Al día</span></div>
                                 <?php endif; ?>
                             </div>
-
                         </a>
 
-                        <!-- ALERTA DE PRÉSTAMO INDEPENDIENTE -->
                         <?php if ($tiene_prestamo): ?>
                             <?php if ($tiene_mora): ?>
                                 <div class="alerta-prestamo mora" style="margin-top: 6px; background: #fff;">
                                     <i class="fas fa-exclamation-triangle"></i>
-                                    <span>PRÉSTAMO EN MORA - Cuota: $<?php echo number_format($valor_cuota_mostrar, 0, ',', '.'); ?></span>
+                                    <span>PRÉSTAMO EN MORA - Saldo: $<?php echo number_format($deuda_prestamo, 0, ',', '.'); ?></span>
                                 </div>
                             <?php else: ?>
                                 <div class="alerta-prestamo al-dia" style="margin-top: 6px; background: #fff;">
                                     <i class="fas fa-info-circle"></i>
-                                    <span>Tiene préstamo al día - Cuota: $<?php echo number_format($valor_cuota_mostrar, 0, ',', '.'); ?></span>
+                                    <span>Tiene préstamo al día - Saldo: $<?php echo number_format($deuda_prestamo, 0, ',', '.'); ?></span>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if ($saldo > 0 && $deuda_prestamo > 0): ?>
+                                <div style="margin-top: 5px;">
+                                    <button type="button"
+                                        class="btn btn-warning btn-sm w-100"
+                                        style="font-weight: 700; font-size: 0.75rem;"
+                                        data-chofer="<?php echo $chofer_id_card; ?>"
+                                        data-saldo="<?php echo $saldo; ?>"
+                                        data-deuda="<?php echo $deuda_prestamo; ?>"
+                                        data-nombre="<?php echo htmlspecialchars($c['nombre']); ?>"
+                                        onclick="abrirModalDeuda(this)">
+                                        <i class="fas fa-hand-holding-usd"></i> Aplicar Saldo a Favor a Deuda
+                                    </button>
                                 </div>
                             <?php endif; ?>
                         <?php endif; ?>
 
-                        <!-- OBSERVACIONES -->
                         <div class="observacion-container" data-chofer="<?php echo $chofer_id_card; ?>">
-                            <label class="observacion-label">
-                                <i class="fas fa-comment-dots"></i> Observaciones
-                            </label>
-
+                            <label class="observacion-label"><i class="fas fa-comment-dots"></i> Observaciones</label>
                             <div class="observaciones-lista">
-                                <?php foreach ($obs_list as $o):
-                                    $fecha_cre = date('d/m/Y', strtotime($o['fecha_creacion']));
-                                ?>
+                                <?php foreach ($obs_list as $o): $fecha_cre = date('d/m/Y', strtotime($o['fecha_creacion'])); ?>
                                     <div class="observacion-item">
                                         <span class="observacion-texto"><?php echo htmlspecialchars($o['observacion']); ?></span>
                                         <span class="observacion-fecha"><?php echo $fecha_cre; ?></span>
-                                        <button type="button"
-                                            class="btn-observacion-borrar"
-                                            title="Borrar observación"
-                                            data-id="<?php echo (int)$o['id']; ?>"
-                                            data-chofer="<?php echo $chofer_id_card; ?>">
-                                            <i class="fas fa-times"></i>
-                                        </button>
+                                        <button type="button" class="btn-observacion-borrar" title="Borrar observación" data-id="<?php echo (int)$o['id']; ?>" data-chofer="<?php echo $chofer_id_card; ?>"><i class="fas fa-times"></i></button>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
-
                             <div class="observacion-nueva">
-                                <input type="text"
-                                    class="observacion-input"
-                                    data-chofer="<?php echo $chofer_id_card; ?>"
-                                    placeholder="Nueva observación..."
-                                    maxlength="500">
-                                <button type="button"
-                                    class="btn-observacion-agregar"
-                                    title="Agregar observación"
-                                    data-chofer="<?php echo $chofer_id_card; ?>"
-                                    data-fecha="<?php echo htmlspecialchars($fecha_filtro); ?>">
-                                    <i class="fas fa-plus"></i>
-                                </button>
+                                <input type="text" class="observacion-input" data-chofer="<?php echo $chofer_id_card; ?>" placeholder="Nueva observación..." maxlength="500">
+                                <button type="button" class="btn-observacion-agregar" title="Agregar observación" data-chofer="<?php echo $chofer_id_card; ?>" data-fecha="<?php echo htmlspecialchars($fecha_filtro); ?>"><i class="fas fa-plus"></i></button>
                             </div>
                             <small class="observacion-estado" data-chofer="<?php echo $chofer_id_card; ?>"></small>
                         </div>
-
                     </div>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
-
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
+    <!-- MODAL -->
+    <div class="modal fade" id="modalDeuda" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 12px;">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title text-dark fw-bold"><i class="fas fa-hand-holding-usd"></i> Aplicar Saldo a Favor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Chofer: <strong id="modal-nombre"></strong></p>
+                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.9rem;">
+                        <span>Deuda del Préstamo:</span>
+                        <strong class="text-danger">$<span id="modal-deuda"></span></strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3" style="font-size: 0.9rem;">
+                        <span>Saldo a Favor Disponible:</span>
+                        <strong class="text-success">$<span id="modal-saldo"></span></strong>
+                    </div>
+                    <label class="form-label fw-bold">¿Cuánto querés aplicar a la deuda?</label>
+                    <input type="number" id="monto_aplicar" class="form-control form-control-lg text-end" step="0.01">
+                    <small class="text-muted">Máximo a aplicar: $<span id="modal-maximo"></span></small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="procesarPagoDeuda()">Aplicar Pago</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            // === AGREGAR NUEVA OBSERVACIÓN ===
+    <!-- BOOTSTRAP JS DESDE CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // === LÓGICA DE OBSERVACIONES ===
+        document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.btn-observacion-agregar').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-
                     const choferId = this.getAttribute('data-chofer');
                     const fecha = this.getAttribute('data-fecha');
-
                     if (!choferId || !fecha) return;
-
                     const container = this.closest('.observacion-container');
                     const input = container.querySelector('.observacion-input');
-
                     if (!input || input.value.trim() === '') return;
-
                     agregarObservacion(choferId, fecha, input, container);
                 });
             });
 
-            // Enter en el input → agregar
             document.querySelectorAll('.observacion-input').forEach(input => {
                 input.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') {
@@ -1017,7 +981,6 @@ $con->close();
                 input.addEventListener('click', e => e.stopPropagation());
             });
 
-            // === BORRAR ===
             document.querySelectorAll('.btn-observacion-borrar').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -1032,84 +995,16 @@ $con->close();
             function agregarObservacion(choferId, fecha, input, container) {
                 const texto = input.value.trim();
                 if (texto === '') return;
-
                 const estado = container.querySelector('.observacion-estado');
                 if (estado) {
                     estado.textContent = 'Guardando...';
                     estado.className = 'observacion-estado';
                 }
-
                 const fd = new FormData();
                 fd.append('accion', 'crear');
                 fd.append('chofer_id', choferId);
                 fd.append('fecha', fecha);
                 fd.append('observacion', texto);
-
-                fetch('guardar_observacion.php', {
-                        method: 'POST',
-                        body: fd
-                    })
-                    .then(async r => {
-                        const text = await r.text();
-                        try {
-                            return JSON.parse(text);
-                        } catch (e) {
-                            throw new Error('Respuesta no-JSON del servidor');
-                        }
-                    })
-                    .then(data => {
-                        if (data.ok) {
-                            const lista = container.querySelector('.observaciones-lista');
-                            const fechaFmt = formatearFecha(fecha);
-
-                            const item = document.createElement('div');
-                            item.className = 'observacion-item';
-                            item.innerHTML = `
-                        <span class="observacion-texto">${escapeHtml(texto)}</span>
-                        <span class="observacion-fecha">${fechaFmt}</span>
-                        <button type="button" class="btn-observacion-borrar" title="Borrar observación" data-id="${data.id}" data-chofer="${choferId}">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    `;
-                            lista.appendChild(item);
-
-                            item.querySelector('.btn-observacion-borrar').addEventListener('click', function(ev) {
-                                ev.preventDefault();
-                                ev.stopPropagation();
-                                if (!confirm('¿Borrar esta observación?')) return;
-                                borrarObservacion(this.getAttribute('data-id'), choferId, item, container);
-                            });
-
-                            input.value = '';
-
-                            if (estado) {
-                                estado.textContent = 'Guardada ✓';
-                                estado.className = 'observacion-estado ok';
-                                setTimeout(() => {
-                                    estado.textContent = '';
-                                }, 2000);
-                            }
-                        } else {
-                            if (estado) {
-                                estado.textContent = 'Error: ' + (data.error || 'desconocido');
-                                estado.className = 'observacion-estado error';
-                            }
-                        }
-                    })
-                    .catch(() => {
-                        if (estado) {
-                            estado.textContent = 'Error de conexión';
-                            estado.className = 'observacion-estado error';
-                        }
-                    });
-            }
-
-            function borrarObservacion(id, choferId, itemEl, container) {
-                const estado = container.querySelector('.observacion-estado');
-                const fd = new FormData();
-                fd.append('accion', 'borrar');
-                fd.append('id', id);
-
                 fetch('guardar_observacion.php', {
                         method: 'POST',
                         body: fd
@@ -1124,6 +1019,59 @@ $con->close();
                     })
                     .then(data => {
                         if (data.ok) {
+                            const lista = container.querySelector('.observaciones-lista');
+                            const fechaFmt = formatearFecha(fecha);
+                            const item = document.createElement('div');
+                            item.className = 'observacion-item';
+                            item.innerHTML = `<span class="observacion-texto">${escapeHtml(texto)}</span><span class="observacion-fecha">${fechaFmt}</span><button type="button" class="btn-observacion-borrar" title="Borrar observación" data-id="${data.id}" data-chofer="${choferId}"><i class="fas fa-times"></i></button>`;
+                            lista.appendChild(item);
+                            item.querySelector('.btn-observacion-borrar').addEventListener('click', function(ev) {
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                if (!confirm('¿Borrar esta observación?')) return;
+                                borrarObservacion(this.getAttribute('data-id'), choferId, item, container);
+                            });
+                            input.value = '';
+                            if (estado) {
+                                estado.textContent = 'Guardada ✓';
+                                estado.className = 'observacion-estado ok';
+                                setTimeout(() => {
+                                    estado.textContent = '';
+                                }, 2000);
+                            }
+                        } else {
+                            if (estado) {
+                                estado.textContent = 'Error';
+                                estado.className = 'observacion-estado error';
+                            }
+                        }
+                    }).catch(() => {
+                        if (estado) {
+                            estado.textContent = 'Error de red';
+                            estado.className = 'observacion-estado error';
+                        }
+                    });
+            }
+
+            function borrarObservacion(id, choferId, itemEl, container) {
+                const estado = container.querySelector('.observacion-estado');
+                const fd = new FormData();
+                fd.append('accion', 'borrar');
+                fd.append('id', id);
+                fetch('guardar_observacion.php', {
+                        method: 'POST',
+                        body: fd
+                    })
+                    .then(async r => {
+                        const text = await r.text();
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            throw new Error();
+                        }
+                    })
+                    .then(data => {
+                        if (data.ok) {
                             itemEl.remove();
                             if (estado) {
                                 estado.textContent = 'Borrada ✓';
@@ -1132,19 +1080,8 @@ $con->close();
                                     estado.textContent = '';
                                 }, 2000);
                             }
-                        } else {
-                            if (estado) {
-                                estado.textContent = 'Error al borrar';
-                                estado.className = 'observacion-estado error';
-                            }
                         }
-                    })
-                    .catch(() => {
-                        if (estado) {
-                            estado.textContent = 'Error de conexión';
-                            estado.className = 'observacion-estado error';
-                        }
-                    });
+                    }).catch(() => {});
             }
 
             function formatearFecha(iso) {
@@ -1158,8 +1095,82 @@ $con->close();
                 return div.innerHTML;
             }
         });
-    </script>
 
+        // === LÓGICA PARA APLICAR SALDO A FAVOR ===
+        let deudaActual = 0;
+        let saldoActual = 0;
+        let idChoferActual = 0;
+
+        function abrirModalDeuda(btn) {
+            idChoferActual = btn.getAttribute('data-chofer');
+            saldoActual = parseFloat(btn.getAttribute('data-saldo')) || 0;
+            deudaActual = parseFloat(btn.getAttribute('data-deuda')) || 0;
+            const nombre = btn.getAttribute('data-nombre');
+
+            document.getElementById('modal-nombre').innerText = nombre;
+            document.getElementById('modal-deuda').innerText = deudaActual.toLocaleString('es-AR', {
+                minimumFractionDigits: 2
+            });
+            document.getElementById('modal-saldo').innerText = saldoActual.toLocaleString('es-AR', {
+                minimumFractionDigits: 2
+            });
+
+            const maximo = Math.min(saldoActual, deudaActual);
+            document.getElementById('modal-maximo').innerText = maximo.toLocaleString('es-AR', {
+                minimumFractionDigits: 2
+            });
+
+            const inputMonto = document.getElementById('monto_aplicar');
+            inputMonto.value = maximo.toFixed(2);
+            inputMonto.max = maximo;
+            inputMonto.min = 0.01;
+
+            var modalElement = document.getElementById('modalDeuda');
+            if (typeof bootstrap !== 'undefined') {
+                var myModal = new bootstrap.Modal(modalElement);
+                myModal.show();
+            } else {
+                modalElement.style.display = 'block';
+                modalElement.classList.add('show');
+                document.body.classList.add('modal-open');
+            }
+        }
+
+        function procesarPagoDeuda() {
+            const monto = parseFloat(document.getElementById('monto_aplicar').value);
+            const maximo = Math.min(saldoActual, deudaActual);
+
+            if (isNaN(monto) || monto <= 0) {
+                alert('Por favor, ingresá un monto válido.');
+                return;
+            }
+            if (monto > maximo) {
+                alert('El monto no puede superar el máximo permitido ($' + maximo + ').');
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('chofer_id', idChoferActual);
+            fd.append('monto', monto);
+
+            fetch('aplicar_saldo_deuda.php', {
+                    method: 'POST',
+                    body: fd
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.ok) {
+                        alert('✅ Saldo aplicado a la deuda correctamente.');
+                        window.location.reload();
+                    } else {
+                        alert('❌ Error: ' + data.error);
+                    }
+                })
+                .catch(err => {
+                    alert('❌ Error de conexión al procesar el pago.');
+                });
+        }
+    </script>
 </body>
 
 </html>

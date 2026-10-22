@@ -600,11 +600,22 @@ $es_ayer = ($fecha_filtro === date('Y-m-d', strtotime('-1 day')));
                 <h3>Consulta Movimientos</h3>
                 <p>Ver recaudación detallada por período</p>
             </a>
-            <a href="javascript:void(0)" onclick="abrirEnNuevaPestana('php/ver_recauda.php', event)" class="menu-card">
-                <div class="icon icon-planilla"><i class="fas fa-chart-line"></i></div>
-                <h3>Planilla Completa</h3>
-                <p>Reportes filtrados de recaudación</p>
+            <a href="javascript:void(0)" onclick="abrirEnNuevaPestana('php/reporte_movil.php', event)" class="menu-card">
+                <div class="icon" style="background: linear-gradient(135deg, #ffc107, #fd7e14);">
+                    <i class="fas fa-table"></i>
+                </div>
+                <h3>Planilla de Caja</h3>
+                <p>Reporte mensual por móvil para Excel</p>
             </a>
+
+            <a href="javascript:void(0)" onclick="abrirEnNuevaPestana('php/recibo_semanal.php', event)" class="menu-card">
+                <div class="icon" style="background: linear-gradient(135deg, #17a2b8, #0dcaf0);"><i class="fas fa-file-invoice"></i></div>
+                <h3>Recibo Semanal</h3>
+                <p>Imprimir liquidación semanal del chofer</p>
+            </a>
+
+
+
             <a href="backup.php" target="_blank" class="menu-card" style="background: #fff3cd; border: 1px solid #ffeeba;">
                 <div class="icon" style="background: linear-gradient(135deg, #28a745, #20c997);"><i class="fas fa-download"></i></div>
                 <h3>Backup de Base de Datos</h3>

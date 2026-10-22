@@ -1,0 +1,499 @@
+-- BACKUP DE BASE DE DATOS: reca
+-- Fecha: 2026-10-22 21:31:18
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET time_zone = "+00:00";
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+-- --------------------------------------------------------
+-- Estructura de la tabla `asignaciones_auto`
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `asignaciones_auto`;
+CREATE TABLE `asignaciones_auto` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `chofer_id` int(11) NOT NULL,
+  `vehiculo_id` int(11) NOT NULL,
+  `turno` varchar(10) NOT NULL DEFAULT 'DIA',
+  `fecha_desde` date NOT NULL,
+  `fecha_hasta` date DEFAULT NULL,
+  `activa` tinyint(1) NOT NULL DEFAULT 1,
+  `observaciones` varchar(255) DEFAULT '',
+  PRIMARY KEY (`id`),
+  KEY `idx_chofer` (`chofer_id`),
+  KEY `idx_vehiculo` (`vehiculo_id`),
+  KEY `idx_activa` (`activa`),
+  KEY `idx_vehiculo_turno_activa` (`vehiculo_id`,`turno`,`activa`)
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4;
+
+-- Volcado de datos para la tabla `asignaciones_auto`
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('1', '1', '5', 'DIA', '2026-10-15', '2026-10-01', '0', '');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('2', '2', '10', 'DIA', '2026-10-15', '2026-10-19', '0', '');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('3', '3', '8', 'DIA', '2026-10-15', '2026-10-19', '0', '');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('4', '1', '2', 'DIA', '2026-10-01', NULL, '1', 'EMPEZO MES CON NUEVO AUTO');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('5', '3', '2', 'NOCHE', '2026-10-19', '2026-10-19', '0', 'EMPEZO CON NUEVO AUTO');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('6', '12', '12', 'NOCHE', '2026-10-19', NULL, '1', 'NUEVO AUTO');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('7', '10', '10', 'DIA', '2026-10-19', NULL, '1', 'NUEVO AUTO');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('8', '9', '9', 'DIA', '2026-10-19', NULL, '1', 'NUEVO AUTO');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('9', '8', '7', 'DIA', '2026-10-19', NULL, '1', 'NUEVO AUTO');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('10', '7', '6', 'DIA', '2026-10-19', NULL, '1', 'NUEVO AUTO');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('11', '6', '5', 'DIA', '2026-10-19', NULL, '1', 'NUEVO AUTO');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('12', '5', '4', 'DIA', '2026-10-19', '2026-10-19', '0', 'NUEVO AUTO');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('13', '2', '4', 'NOCHE', '2026-10-19', '2026-10-19', '0', 'NUEVO AUTO');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('14', '4', '3', 'DIA', '2026-10-19', NULL, '1', 'NUEVO AUTO');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('15', '13', '3', 'NOCHE', '2026-10-19', NULL, '1', 'NUEVO AUTO');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('16', '11', '11', 'DIA', '2026-10-19', NULL, '1', 'NUEVO AUTO');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('17', '3', '4', 'NOCHE', '2026-10-19', NULL, '1', 'CAMBIO DE UTO PORQUE EL DEL TURNO DIA LLEGO TARDE');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('18', '2', '2', 'NOCHE', '2026-10-19', NULL, '1', 'CAMBIO DE AUTO PORQUE DUARTE LLEGO TARDE');
+INSERT INTO `asignaciones_auto` (`id`, `chofer_id`, `vehiculo_id`, `turno`, `fecha_desde`, `fecha_hasta`, `activa`, `observaciones`) VALUES ('19', '5', '4', 'DIA', '2026-10-21', NULL, '1', 'nuevo auto');
+
+-- --------------------------------------------------------
+-- Estructura de la tabla `choferes`
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `choferes`;
+CREATE TABLE `choferes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(50) NOT NULL,
+  `cel` varchar(15) NOT NULL DEFAULT '',
+  `email` varchar(40) NOT NULL DEFAULT '',
+  `barrio` varchar(50) NOT NULL DEFAULT '',
+  `dir` varchar(50) NOT NULL DEFAULT '',
+  `cp` varchar(5) NOT NULL DEFAULT '',
+  `foto` varchar(50) DEFAULT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  `fecha_alta` date NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4;
+
+-- Volcado de datos para la tabla `choferes`
+INSERT INTO `choferes` (`id`, `nombre`, `cel`, `email`, `barrio`, `dir`, `cp`, `foto`, `activo`, `fecha_alta`) VALUES ('1', 'DUARTE', '1156238956', 'juan@gmail.com', 'FLORES', 'OLIDEN 258', '', 'chofer_6ad0e26374f3f_rostro-1.webp', '1', '2026-10-15');
+INSERT INTO `choferes` (`id`, `nombre`, `cel`, `email`, `barrio`, `dir`, `cp`, `foto`, `activo`, `fecha_alta`) VALUES ('2', 'SHMIDT', '1136525896', 'ELSAPATO@GMAIL.COM', 'Belgrano', 'JURAMENTO 2589', '', 'chofer_6ad0e2a27d01f_rosto.webp', '1', '2026-10-15');
+INSERT INTO `choferes` (`id`, `nombre`, `cel`, `email`, `barrio`, `dir`, `cp`, `foto`, `activo`, `fecha_alta`) VALUES ('3', 'JADUR', '1111111111', 'robertolopez@gmail.com', 'PAlermo Holliwood', 'Niceto Vega 1500', '1450', 'chofer_6ad0e3f590d69_CARA DE PERRO.jpg', '1', '2026-10-15');
+INSERT INTO `choferes` (`id`, `nombre`, `cel`, `email`, `barrio`, `dir`, `cp`, `foto`, `activo`, `fecha_alta`) VALUES ('4', 'GOMEZ IVAN', '22222222', 'GOMEZ@GMAIL.COM', '', '', '', NULL, '1', '2026-10-19');
+INSERT INTO `choferes` (`id`, `nombre`, `cel`, `email`, `barrio`, `dir`, `cp`, `foto`, `activo`, `fecha_alta`) VALUES ('5', 'CALLEGARI', '1133333333', 'CALEGARI@GMAIL.COM', '', '', '', NULL, '1', '2026-10-19');
+INSERT INTO `choferes` (`id`, `nombre`, `cel`, `email`, `barrio`, `dir`, `cp`, `foto`, `activo`, `fecha_alta`) VALUES ('6', 'IGLESIAS', '1144444444', '', '', '', '', NULL, '1', '2026-10-19');
+INSERT INTO `choferes` (`id`, `nombre`, `cel`, `email`, `barrio`, `dir`, `cp`, `foto`, `activo`, `fecha_alta`) VALUES ('7', 'GASTON', '1155555555', 'GASTON@GMAIL.COM', '', '', '', NULL, '1', '2026-10-19');
+INSERT INTO `choferes` (`id`, `nombre`, `cel`, `email`, `barrio`, `dir`, `cp`, `foto`, `activo`, `fecha_alta`) VALUES ('8', 'MAGLIANO', '1166666666', 'MAGLIANO@GMAIL.COM', '', '', '', NULL, '1', '2026-10-19');
+INSERT INTO `choferes` (`id`, `nombre`, `cel`, `email`, `barrio`, `dir`, `cp`, `foto`, `activo`, `fecha_alta`) VALUES ('9', 'ODDI', '1177777777', 'ODDI@GMAIL.COM', '', '', '', NULL, '1', '2026-10-19');
+INSERT INTO `choferes` (`id`, `nombre`, `cel`, `email`, `barrio`, `dir`, `cp`, `foto`, `activo`, `fecha_alta`) VALUES ('10', 'BARRIONUEVO', '1188888888', 'BARRIONUEVO@GMAIL.COM', '', '', '', NULL, '1', '2026-10-19');
+INSERT INTO `choferes` (`id`, `nombre`, `cel`, `email`, `barrio`, `dir`, `cp`, `foto`, `activo`, `fecha_alta`) VALUES ('11', 'ZURITA', '1199999999', 'ZURITA@GMAIL.COM', '', '', '', NULL, '1', '2026-10-19');
+INSERT INTO `choferes` (`id`, `nombre`, `cel`, `email`, `barrio`, `dir`, `cp`, `foto`, `activo`, `fecha_alta`) VALUES ('12', 'MASTRANGELO', '1100000000', 'MASTRANGELO@GMAIL.COM', '', '', '', NULL, '1', '2026-10-19');
+INSERT INTO `choferes` (`id`, `nombre`, `cel`, `email`, `barrio`, `dir`, `cp`, `foto`, `activo`, `fecha_alta`) VALUES ('13', 'OCHOA', '1100001111', '8A@GMAIL.COM', '', '', '', NULL, '1', '2026-10-19');
+
+-- --------------------------------------------------------
+-- Estructura de la tabla `cuenta_corriente`
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `cuenta_corriente`;
+CREATE TABLE `cuenta_corriente` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `chofer_id` int(11) NOT NULL,
+  `fecha` date NOT NULL,
+  `monto` decimal(10,2) NOT NULL,
+  `tipo` varchar(20) NOT NULL DEFAULT 'DEUDA',
+  `descripcion` varchar(255) DEFAULT '',
+  `recauda_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_chofer` (`chofer_id`),
+  KEY `idx_fecha` (`fecha`),
+  KEY `idx_tipo` (`tipo`)
+) ENGINE=InnoDB AUTO_INCREMENT=130 DEFAULT CHARSET=utf8mb4;
+
+-- Volcado de datos para la tabla `cuenta_corriente`
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('70', '4', '2026-09-21', '-7500.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-21', '163');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('71', '4', '2026-09-22', '-11500.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-22', '164');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('72', '4', '2026-09-24', '2500.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-24', '166');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('73', '4', '2026-09-25', '-7500.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-25', '167');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('74', '4', '2026-09-27', '10000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-27', '169');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('76', '4', '2026-09-28', '-7500.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-28', '173');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('77', '4', '2026-09-29', '-3000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-29', '174');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('78', '13', '2026-09-01', '0.00', 'DEUDA', 'Quedó debiendo del turno NOCHE del 2026-09-01', '176');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('80', '5', '2026-09-05', '0.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-05', '215');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('82', '3', '2026-09-07', '-15000.00', 'DEUDA', 'Quedó debiendo del turno NOCHE del 2026-09-07', '251');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('83', '3', '2026-09-08', '-5000.00', 'DEUDA', 'Quedó debiendo del turno NOCHE del 2026-09-08', '252');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('84', '3', '2026-09-09', '-5000.00', 'DEUDA', 'Quedó debiendo del turno NOCHE del 2026-09-09', '253');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('86', '3', '2026-09-13', '20000.00', 'A CUENTA', 'A cuenta del turno NOCHE del 2026-09-13', '257');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('87', '3', '2026-09-23', '-5000.00', 'DEUDA', 'Quedó debiendo del turno NOCHE del 2026-09-23', '267');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('88', '6', '2026-09-02', '-2500.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-02', '276');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('89', '6', '2026-09-03', '-6500.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-03', '277');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('90', '6', '2026-09-04', '-14000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-04', '278');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('91', '6', '2026-09-06', '23000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-06', '280');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('92', '6', '2026-09-07', '-20000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-07', '281');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('93', '6', '2026-09-12', '-17500.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-12', '286');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('94', '6', '2026-09-14', '-27000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-14', '288');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('95', '6', '2026-09-15', '15200.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-15', '289');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('96', '6', '2026-09-18', '0.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-18', '292');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('97', '6', '2026-09-20', '15000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-20', '294');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('98', '6', '2026-09-23', '-1500.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-23', '297');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('99', '6', '2026-09-29', '0.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-29', '303');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('100', '6', '2026-09-30', '-7000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-30', '304');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('101', '8', '2026-09-01', '10000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-01', '305');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('102', '8', '2026-09-02', '20000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-02', '306');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('103', '8', '2026-09-03', '40000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-03', '307');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('105', '8', '2026-09-04', '-40000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-04', '309');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('106', '8', '2026-09-05', '60000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-05', '311');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('107', '8', '2026-09-07', '-40000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-07', '313');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('108', '8', '2026-09-08', '60000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-08', '314');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('109', '8', '2026-09-09', '-40000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-09', '315');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('110', '8', '2026-09-12', '-40000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-12', '318');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('111', '8', '2026-09-15', '20000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-15', '321');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('112', '8', '2026-09-16', '-40000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-16', '322');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('113', '8', '2026-09-17', '40000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-17', '323');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('114', '8', '2026-09-18', '20000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-18', '324');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('115', '8', '2026-09-21', '40000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-21', '327');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('116', '8', '2026-09-22', '10000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-22', '328');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('117', '8', '2026-09-23', '-40000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-23', '329');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('118', '8', '2026-09-24', '30000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-24', '330');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('119', '8', '2026-09-25', '-40000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-25', '331');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('120', '8', '2026-09-26', '40000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-26', '332');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('121', '8', '2026-09-28', '10000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-28', '334');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('122', '8', '2026-09-29', '10000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-29', '335');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('123', '8', '2026-09-30', '-40000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-30', '336');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('124', '10', '2026-09-07', '-15000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-07', '377');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('125', '10', '2026-09-14', '-15000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-14', '385');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('126', '10', '2026-09-17', '-15000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-17', '388');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('127', '10', '2026-09-23', '70000.00', 'A CUENTA', 'A cuenta del turno DIA del 2026-09-23', '394');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('128', '10', '2026-09-26', '-70000.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-26', '397');
+INSERT INTO `cuenta_corriente` (`id`, `chofer_id`, `fecha`, `monto`, `tipo`, `descripcion`, `recauda_id`) VALUES ('129', '10', '2026-09-30', '0.00', 'DEUDA', 'Quedó debiendo del turno DIA del 2026-09-30', '401');
+
+-- --------------------------------------------------------
+-- Estructura de la tabla `observaciones`
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `observaciones`;
+CREATE TABLE `observaciones` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `chofer_id` int(11) NOT NULL,
+  `fecha_creacion` date NOT NULL,
+  `observacion` text NOT NULL,
+  `creado` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_chofer` (`chofer_id`),
+  KEY `idx_fecha` (`fecha_creacion`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+-- Estructura de la tabla `prestamos`
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `prestamos`;
+CREATE TABLE `prestamos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `chofer_id` int(11) NOT NULL,
+  `monto` decimal(10,2) NOT NULL,
+  `interes` decimal(5,2) DEFAULT 0.00,
+  `monto_total` decimal(10,2) NOT NULL,
+  `cuotas` int(11) NOT NULL DEFAULT 1,
+  `valor_cuota` decimal(10,2) NOT NULL,
+  `cuotas_pagas` int(11) DEFAULT 0,
+  `fecha` date NOT NULL,
+  `descripcion` varchar(255) DEFAULT NULL,
+  `observaciones` text DEFAULT NULL,
+  `estado` enum('ACTIVO','PAGADO','CANCELADO','ARCHIVADO') DEFAULT 'ACTIVO',
+  `estado_mora` enum('AL DIA','EN MORA') DEFAULT 'AL DIA',
+  `creado` date NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_chofer` (`chofer_id`),
+  KEY `idx_fecha` (`fecha`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4;
+
+-- Volcado de datos para la tabla `prestamos`
+INSERT INTO `prestamos` (`id`, `chofer_id`, `monto`, `interes`, `monto_total`, `cuotas`, `valor_cuota`, `cuotas_pagas`, `fecha`, `descripcion`, `observaciones`, `estado`, `estado_mora`, `creado`) VALUES ('4', '1', '617250.00', '0.00', '617250.00', '1', '617250.00', '0', '2026-08-31', 'Deuda anterior', NULL, 'ACTIVO', 'EN MORA', '2026-10-21');
+INSERT INTO `prestamos` (`id`, `chofer_id`, `monto`, `interes`, `monto_total`, `cuotas`, `valor_cuota`, `cuotas_pagas`, `fecha`, `descripcion`, `observaciones`, `estado`, `estado_mora`, `creado`) VALUES ('5', '4', '4500.00', '0.00', '4500.00', '1', '4500.00', '1', '2026-08-31', '', NULL, 'ARCHIVADO', 'AL DIA', '2026-10-21');
+INSERT INTO `prestamos` (`id`, `chofer_id`, `monto`, `interes`, `monto_total`, `cuotas`, `valor_cuota`, `cuotas_pagas`, `fecha`, `descripcion`, `observaciones`, `estado`, `estado_mora`, `creado`) VALUES ('6', '8', '320000.00', '0.00', '320000.00', '1', '320000.00', '0', '2026-09-01', 'Viene de deuda anterior', '', 'ACTIVO', 'EN MORA', '2026-10-22');
+INSERT INTO `prestamos` (`id`, `chofer_id`, `monto`, `interes`, `monto_total`, `cuotas`, `valor_cuota`, `cuotas_pagas`, `fecha`, `descripcion`, `observaciones`, `estado`, `estado_mora`, `creado`) VALUES ('7', '10', '197000.00', '0.00', '197000.00', '1', '197000.00', '0', '2026-08-01', 'DEUDA ANTERIOR', '', 'ACTIVO', 'EN MORA', '2026-10-22');
+
+-- --------------------------------------------------------
+-- Estructura de la tabla `prestamos_pagos`
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `prestamos_pagos`;
+CREATE TABLE `prestamos_pagos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `prestamo_id` int(11) NOT NULL,
+  `monto` decimal(10,2) NOT NULL,
+  `fecha_pago` date NOT NULL,
+  `creado` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_prestamo` (`prestamo_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4;
+
+-- Volcado de datos para la tabla `prestamos_pagos`
+INSERT INTO `prestamos_pagos` (`id`, `prestamo_id`, `monto`, `fecha_pago`, `creado`) VALUES ('20', '5', '4500.00', '2026-10-21', '2026-10-21 12:14:34');
+
+-- --------------------------------------------------------
+-- Estructura de la tabla `recauda`
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `recauda`;
+CREATE TABLE `recauda` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `fecha` date NOT NULL,
+  `chofer_id` int(11) NOT NULL,
+  `vehiculo_id` int(11) DEFAULT NULL,
+  `movil` int(11) NOT NULL,
+  `turno` varchar(6) NOT NULL,
+  `abono_diario` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `paga` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `porcent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `comision` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `voucher` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `mp` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `ft` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `total` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `debe` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `observaciones` varchar(255) DEFAULT '',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `fecha_chofer` (`fecha`,`chofer_id`),
+  KEY `idx_chofer` (`chofer_id`),
+  KEY `idx_fecha` (`fecha`),
+  KEY `idx_movil` (`movil`)
+) ENGINE=InnoDB AUTO_INCREMENT=402 DEFAULT CHARSET=utf8mb4;
+
+-- Volcado de datos para la tabla `recauda`
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('106', '2026-09-01', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('107', '2026-09-02', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '50000.00', '17500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('108', '2026-09-03', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('109', '2026-09-04', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '30000.00', '37500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('110', '2026-09-05', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '50000.00', '17500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('111', '2026-09-06', '1', '2', '72', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO TRABAJO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('112', '2026-09-07', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('119', '2026-09-08', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '37500.00', '30000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('120', '2026-09-09', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('121', '2026-09-10', '1', '2', '72', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FALTO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('122', '2026-09-11', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('123', '2026-09-12', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('124', '2026-09-13', '1', '2', '72', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('127', '2026-09-14', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('128', '2026-09-15', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '60000.00', '7500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('129', '2026-09-16', '1', '2', '72', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FALTO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('130', '2026-09-17', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('131', '2026-09-18', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '40000.00', '27500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('132', '2026-09-19', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '50000.00', '17500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('133', '2026-09-20', '1', '2', '72', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('134', '2026-09-21', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '25000.00', '42500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('135', '2026-09-22', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('136', '2026-09-23', '1', '2', '72', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FALTO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('137', '2026-09-24', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '27500.00', '40000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('138', '2026-09-25', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '20000.00', '47500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('139', '2026-09-26', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '30000.00', '37500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('140', '2026-09-28', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('141', '2026-09-29', '1', '2', '72', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FALTO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('142', '2026-09-30', '1', '2', '72', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('145', '2026-09-01', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '20000.00', '47500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('146', '2026-09-02', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '28000.00', '39500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('147', '2026-09-03', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '48000.00', '19500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('148', '2026-09-04', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '23000.00', '44500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('149', '2026-09-05', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '25000.00', '42500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('150', '2026-09-07', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('151', '2026-09-08', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '14000.00', '53500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('152', '2026-09-09', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '8000.00', '59500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('153', '2026-09-10', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '20000.00', '47500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('154', '2026-09-11', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '5000.00', '62500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('155', '2026-09-12', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '30000.00', '37500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('156', '2026-09-14', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '30000.00', '37500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('157', '2026-09-15', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '10000.00', '57500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('158', '2026-09-16', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '5000.00', '62500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('159', '2026-09-17', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '27000.00', '40500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('160', '2026-09-18', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '8000.00', '59500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('161', '2026-09-19', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '23500.00', '44000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('162', '2026-09-20', '4', '3', '94', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FRANCO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('163', '2026-09-21', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '60000.00', '0.00', '7500.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('164', '2026-09-22', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '10000.00', '46000.00', '0.00', '11500.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('165', '2026-09-23', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('166', '2026-09-24', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '10000.00', '60000.00', '0.00', '-2500.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('167', '2026-09-25', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '60000.00', '0.00', '7500.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('168', '2026-09-26', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('169', '2026-09-27', '4', '3', '94', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '10000.00', '0.00', '-10000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('173', '2026-09-28', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '60000.00', '0.00', '7500.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('174', '2026-09-29', '4', '3', '94', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '16500.00', '48000.00', '0.00', '3000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('175', '2026-09-30', '4', '3', '94', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', '???');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('176', '2026-09-01', '13', '3', '94', 'NOCHE', '65000.00', '0.00', '10.00', '4149.56', '41495.55', '0.00', '27654.00', '37346.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('177', '2026-09-02', '13', '3', '94', 'NOCHE', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('178', '2026-09-03', '13', '3', '94', 'NOCHE', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('179', '2026-09-04', '13', '3', '94', 'NOCHE', '65000.00', '0.00', '10.00', '2100.00', '21000.00', '0.00', '46100.00', '18900.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('184', '2026-09-05', '13', '3', '94', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '26900.00', '38100.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('185', '2026-09-06', '13', '3', '94', 'NOCHE', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('186', '2026-09-07', '13', '3', '94', 'NOCHE', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('187', '2026-09-08', '13', '3', '94', 'NOCHE', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('251', '2026-09-07', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '50000.00', '0.00', '15000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('252', '2026-09-08', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '60000.00', '0.00', '5000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('253', '2026-09-09', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '60000.00', '0.00', '5000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('254', '2026-09-10', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('255', '2026-09-11', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('256', '2026-09-12', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('257', '2026-09-13', '3', '4', '95', 'NOCHE', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '20000.00', '0.00', '-20000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('258', '2026-09-14', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('259', '2026-09-15', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('260', '2026-09-16', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('261', '2026-09-17', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('262', '2026-09-18', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('263', '2026-09-19', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('264', '2026-09-20', '3', '4', '95', 'NOCHE', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FRANCO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('265', '2026-09-21', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('266', '2026-09-22', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('267', '2026-09-23', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '60000.00', '0.00', '5000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('268', '2026-09-24', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('269', '2026-09-25', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('270', '2026-09-26', '3', '4', '95', 'NOCHE', '65000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '65000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('271', '2026-09-27', '3', '4', '95', 'NOCHE', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FRANCO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('272', '2026-09-28', '3', '4', '95', 'NOCHE', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('273', '2026-09-29', '3', '4', '95', 'NOCHE', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('274', '2026-09-30', '3', '4', '95', 'NOCHE', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('275', '2026-09-01', '6', '5', '96', 'DIA', '74500.00', '0.00', '10.00', '0.00', '0.00', '20500.00', '54000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('276', '2026-09-02', '6', '5', '96', 'DIA', '74500.00', '0.00', '10.00', '0.00', '0.00', '20000.00', '52000.00', '0.00', '2500.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('277', '2026-09-03', '6', '5', '96', 'DIA', '74500.00', '0.00', '10.00', '0.00', '0.00', '35000.00', '33000.00', '0.00', '6500.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('278', '2026-09-04', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '33500.00', '20000.00', '0.00', '14000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('279', '2026-09-05', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '9200.00', '58300.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('280', '2026-09-06', '6', '5', '96', 'DIA', '0.00', '0.00', '10.00', '1222.22', '12222.22', '0.00', '12000.00', '11000.00', '-23000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('281', '2026-09-07', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '24900.00', '22600.00', '0.00', '20000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('282', '2026-09-08', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '21500.00', '46000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('283', '2026-09-09', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '5000.00', '62500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('284', '2026-09-10', '6', '5', '96', 'DIA', '74500.00', '0.00', '10.00', '0.00', '0.00', '39500.00', '35000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('285', '2026-09-11', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '1100.00', '11000.00', '11800.00', '45800.00', '9900.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('286', '2026-09-12', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '50000.00', '0.00', '17500.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('287', '2026-09-13', '6', '5', '96', 'DIA', '35000.00', '0.00', '10.00', '0.00', '0.00', '35000.00', '0.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('288', '2026-09-14', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '10000.00', '30500.00', '0.00', '27000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('289', '2026-09-15', '6', '5', '96', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '90200.00', '0.00', '-15200.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('290', '2026-09-16', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('291', '2026-09-17', '6', '5', '96', 'DIA', '74500.00', '0.00', '10.00', '0.00', '0.00', '7000.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('292', '2026-09-18', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '1147.22', '11472.22', '5000.00', '52175.00', '10325.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('293', '2026-09-19', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('294', '2026-09-20', '6', '5', '96', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '15000.00', '0.00', '-15000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('295', '2026-09-21', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('296', '2026-09-22', '6', '5', '96', 'DIA', '74500.00', '0.00', '10.00', '2500.00', '25000.00', '52000.00', '0.00', '22500.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('297', '2026-09-23', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '35500.00', '30500.00', '0.00', '1500.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('298', '2026-09-24', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '13000.00', '54500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('299', '2026-09-25', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('300', '2026-09-26', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '0.00', '67500.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('301', '2026-09-27', '6', '5', '96', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'no trabajo');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('302', '2026-09-28', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '6611.11', '66111.11', '0.00', '8000.00', '59500.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('303', '2026-09-29', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '1011.11', '10111.11', '8000.00', '50400.00', '9100.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('304', '2026-09-30', '6', '5', '96', 'DIA', '67500.00', '0.00', '10.00', '0.00', '0.00', '28000.00', '32500.00', '0.00', '7000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('305', '2026-09-01', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '50000.00', '0.00', '0.00', '-10000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('306', '2026-09-02', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '60000.00', '0.00', '0.00', '-20000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('307', '2026-09-03', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '80000.00', '0.00', '-40000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('309', '2026-09-04', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '40000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('311', '2026-09-05', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '40000.00', '60000.00', '0.00', '-60000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('312', '2026-09-06', '8', '7', '196', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FRANCO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('313', '2026-09-07', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '40000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('314', '2026-09-08', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '52000.00', '48000.00', '0.00', '-60000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('315', '2026-09-09', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '40000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('316', '2026-09-10', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '31000.00', '9000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('317', '2026-09-11', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '40000.00', '0.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('318', '2026-09-12', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '40000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('319', '2026-09-13', '8', '7', '196', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FRANCO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('320', '2026-09-14', '8', '7', '196', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'AUTO EN EL TALLER');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('321', '2026-09-15', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '34000.00', '26000.00', '0.00', '-20000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('322', '2026-09-16', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '40000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('323', '2026-09-17', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '80000.00', '0.00', '-40000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('324', '2026-09-18', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '6000.00', '54000.00', '0.00', '-20000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('325', '2026-09-19', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '40000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('326', '2026-09-20', '8', '7', '196', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FRANCO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('327', '2026-09-21', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '47000.00', '33000.00', '0.00', '-40000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('328', '2026-09-22', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '47000.00', '3000.00', '0.00', '-10000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('329', '2026-09-23', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '40000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('330', '2026-09-24', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '70000.00', '0.00', '0.00', '-30000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('331', '2026-09-25', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '40000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('332', '2026-09-26', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '40000.00', '40000.00', '0.00', '-40000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('333', '2026-09-27', '8', '7', '196', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FRANCO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('334', '2026-09-28', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '50000.00', '0.00', '-10000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('335', '2026-09-29', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '8000.00', '42000.00', '0.00', '-10000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('336', '2026-09-30', '8', '7', '196', 'DIA', '40000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '40000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('337', '2026-09-01', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '32000.00', '38000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('338', '2026-09-02', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '50000.00', '20000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('339', '2026-09-03', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '27000.00', '43000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('340', '2026-09-04', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '8000.00', '62000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('341', '2026-09-05', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '30000.00', '40000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('342', '2026-09-06', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '17000.00', '53000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('343', '2026-09-07', '9', '9', '501', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'franco');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('344', '2026-09-08', '9', '9', '501', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'MEDICO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('345', '2026-09-09', '9', '9', '501', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'MEDICO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('346', '2026-09-10', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '33000.00', '37000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('347', '2026-09-11', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '54000.00', '16000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('348', '2026-09-12', '9', '9', '501', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'MEDICO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('349', '2026-09-13', '9', '9', '501', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'MEDICO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('350', '2026-09-14', '9', '9', '501', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FRANCO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('351', '2026-09-15', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '48000.00', '22000.00', '0.00', '0.00', 'FRANCO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('355', '2026-09-16', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '26000.00', '44000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('356', '2026-09-17', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '27000.00', '43000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('357', '2026-09-18', '9', '9', '501', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'MEDICO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('359', '2026-09-19', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '20000.00', '50000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('360', '2026-09-20', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '24000.00', '46000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('361', '2026-09-21', '9', '9', '501', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FRANCO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('362', '2026-09-22', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '30000.00', '40000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('363', '2026-09-23', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '35000.00', '35000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('364', '2026-09-24', '9', '9', '501', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'MEDICO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('365', '2026-09-25', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '46000.00', '24000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('366', '2026-09-26', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '30000.00', '40000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('367', '2026-09-27', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '20000.00', '50000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('368', '2026-09-28', '9', '9', '501', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'FRANCO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('369', '2026-09-29', '9', '9', '501', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '12000.00', '58000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('370', '2026-09-30', '9', '9', '501', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'ENFERMO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('371', '2026-09-01', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '12300.00', '62700.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('372', '2026-09-02', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '21000.00', '54000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('373', '2026-09-03', '10', '10', '799', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('374', '2026-09-04', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '34800.00', '40200.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('375', '2026-09-05', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '24800.00', '50200.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('376', '2026-09-06', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '53200.00', '21800.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('377', '2026-09-07', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '26600.00', '33400.00', '0.00', '15000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('378', '2026-09-08', '10', '10', '799', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('379', '2026-09-09', '10', '10', '799', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('380', '2026-09-10', '10', '10', '799', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('382', '2026-09-11', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '40600.00', '34400.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('383', '2026-09-12', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '20600.00', '54400.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('384', '2026-09-13', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '28000.00', '47000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('385', '2026-09-14', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '30000.00', '30000.00', '0.00', '15000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('386', '2026-09-15', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '20400.00', '54600.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('387', '2026-09-16', '10', '10', '799', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('388', '2026-09-17', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '9700.00', '50300.00', '0.00', '15000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('389', '2026-09-18', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '20000.00', '55000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('390', '2026-09-19', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '24000.00', '51000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('391', '2026-09-20', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '47300.00', '27700.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('392', '2026-09-21', '10', '10', '799', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('393', '2026-09-22', '10', '10', '799', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '8000.00', '62000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('394', '2026-09-23', '10', '10', '799', 'DIA', '0.00', '0.00', '10.00', '855.56', '8555.56', '31700.00', '30600.00', '7700.00', '-70000.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('395', '2026-09-24', '10', '10', '799', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('396', '2026-09-25', '10', '10', '799', 'DIA', '0.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', 'NO SALIO');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('397', '2026-09-26', '10', '10', '799', 'DIA', '70000.00', '0.00', '10.00', '0.00', '0.00', '0.00', '0.00', '0.00', '70000.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('398', '2026-09-27', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '9700.00', '65300.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('399', '2026-09-28', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '14000.00', '61000.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('400', '2026-09-29', '10', '10', '799', 'DIA', '75000.00', '0.00', '10.00', '0.00', '0.00', '43800.00', '31200.00', '0.00', '0.00', '');
+INSERT INTO `recauda` (`id`, `fecha`, `chofer_id`, `vehiculo_id`, `movil`, `turno`, `abono_diario`, `paga`, `porcent`, `comision`, `voucher`, `mp`, `ft`, `total`, `debe`, `observaciones`) VALUES ('401', '2026-09-30', '10', '10', '799', 'DIA', '75060.00', '0.00', '10.00', '862.22', '8622.22', '18900.00', '48400.00', '7760.00', '0.00', '');
+
+-- --------------------------------------------------------
+-- Estructura de la tabla `vehiculos`
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `vehiculos`;
+CREATE TABLE `vehiculos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `movil` int(11) NOT NULL,
+  `marca` varchar(20) NOT NULL,
+  `modelo` varchar(20) NOT NULL,
+  `dominio` varchar(10) NOT NULL,
+  `tipo` varchar(10) NOT NULL DEFAULT 'TAXI',
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `movil_unico` (`movil`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4;
+
+-- Volcado de datos para la tabla `vehiculos`
+INSERT INTO `vehiculos` (`id`, `movil`, `marca`, `modelo`, `dominio`, `tipo`, `activo`) VALUES ('1', '71', 'CHEVROLET', 'SPIN', 'AA669GD', 'TAXI', '1');
+INSERT INTO `vehiculos` (`id`, `movil`, `marca`, `modelo`, `dominio`, `tipo`, `activo`) VALUES ('2', '72', 'CHEVROLET', 'SPIN', 'AA940SR', 'TAXI', '1');
+INSERT INTO `vehiculos` (`id`, `movil`, `marca`, `modelo`, `dominio`, `tipo`, `activo`) VALUES ('3', '94', 'FIAT', 'CRONOS', 'AF045JW', 'TAXI', '1');
+INSERT INTO `vehiculos` (`id`, `movil`, `marca`, `modelo`, `dominio`, `tipo`, `activo`) VALUES ('4', '95', 'CHEVROLET', 'SPIN', 'MIS427', 'TAXI', '1');
+INSERT INTO `vehiculos` (`id`, `movil`, `marca`, `modelo`, `dominio`, `tipo`, `activo`) VALUES ('5', '96', 'CHEVROLET', 'SPIN', 'MNM803', 'TAXI', '1');
+INSERT INTO `vehiculos` (`id`, `movil`, `marca`, `modelo`, `dominio`, `tipo`, `activo`) VALUES ('6', '171', 'VOLKSWAGEN', 'VOYAGE', 'AA028MN', 'TAXI', '1');
+INSERT INTO `vehiculos` (`id`, `movil`, `marca`, `modelo`, `dominio`, `tipo`, `activo`) VALUES ('7', '196', 'VOLKSWAGEN', 'VOYAGE', 'PQT059', 'TAXI', '1');
+INSERT INTO `vehiculos` (`id`, `movil`, `marca`, `modelo`, `dominio`, `tipo`, `activo`) VALUES ('8', '500', 'VOLKSWAGEN', 'VOYAGE', 'LMK622', 'TAXI', '1');
+INSERT INTO `vehiculos` (`id`, `movil`, `marca`, `modelo`, `dominio`, `tipo`, `activo`) VALUES ('9', '501', 'FIAT', 'CRONOS', 'AG866ID', 'TAXI', '1');
+INSERT INTO `vehiculos` (`id`, `movil`, `marca`, `modelo`, `dominio`, `tipo`, `activo`) VALUES ('10', '799', 'FIAT', 'CRONOS', 'AG866IF', 'TAXI', '1');
+INSERT INTO `vehiculos` (`id`, `movil`, `marca`, `modelo`, `dominio`, `tipo`, `activo`) VALUES ('11', '800', 'FIAT', 'CRONOS', 'AG866II', 'TAXI', '1');
+INSERT INTO `vehiculos` (`id`, `movil`, `marca`, `modelo`, `dominio`, `tipo`, `activo`) VALUES ('12', '1504', 'CHEVROLET', 'SPIN', 'PNU638', 'TAXI', '1');
+

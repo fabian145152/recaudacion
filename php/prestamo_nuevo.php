@@ -13,10 +13,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cuotas = (int)$_POST['cuotas'];
     $fecha = $_POST['fecha'];
     $descripcion = trim($_POST['descripcion']);
+    $observaciones = trim($_POST['observaciones']); // NUEVO
 
     $calculo_auto = isset($_POST['calculo_auto']) ? true : false;
 
-    // Cálculos
     if ($calculo_auto) {
         $monto_interes = $monto * ($interes / 100);
         $monto_total = $monto + $monto_interes;
@@ -27,9 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($chofer_id > 0 && $monto > 0 && $cuotas > 0 && !empty($fecha) && $valor_cuota > 0) {
-        $stmt = $con->prepare("INSERT INTO prestamos (chofer_id, monto, interes, monto_total, cuotas, valor_cuota, fecha, descripcion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        // CORREGIDO: idididss (sin espacios)
-        $stmt->bind_param("idididss", $chofer_id, $monto, $interes, $monto_total, $cuotas, $valor_cuota, $fecha, $descripcion);
+        // Agregamos 'observaciones' al INSERT
+        $stmt = $con->prepare("INSERT INTO prestamos (chofer_id, monto, interes, monto_total, cuotas, valor_cuota, fecha, descripcion, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("idididsss", $chofer_id, $monto, $interes, $monto_total, $cuotas, $valor_cuota, $fecha, $descripcion, $observaciones);
 
         if ($stmt->execute()) {
             echo "<script>window.location='prestamos.php';</script>";
@@ -187,8 +187,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .campo-manual {
             display: none;
         }
-
-        /* Oculto por defecto */
     </style>
 </head>
 
@@ -199,7 +197,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="card-form">
             <h1 class="page-title"><i class="fas fa-plus-circle"></i> Registrar Nuevo Préstamo</h1>
-
             <?php echo $mensaje; ?>
 
             <form method="POST" action="" id="form-prestamo">
@@ -235,19 +232,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <!-- SWITCH PARA CÁLCULO AUTOMÁTICO -->
                 <div class="switch-container">
                     <input type="checkbox" id="calculo_auto" name="calculo_auto" checked>
                     <label for="calculo_auto">Calcular valor de cuota automáticamente</label>
                 </div>
 
-                <!-- CAMPO MANUAL (Oculto si está activado el auto) -->
                 <div class="mb-3 campo-manual" id="div-cuota-manual">
                     <label class="form-label" style="color: #e83e8c; font-weight: 700;">Valor de la Cuota (Manual) ($)</label>
                     <input type="number" id="valor_cuota_manual" name="valor_cuota_manual" class="form-control" step="0.01" min="1" placeholder="0.00" style="border-color: #e83e8c;">
                 </div>
 
-                <!-- PANEL DE CÁLCULO -->
                 <div class="panel-calculo" id="panel-calculo">
                     <div class="fila">
                         <span>Monto base:</span>
@@ -267,9 +261,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <div class="mb-4">
+                <div class="mb-3">
                     <label class="form-label">Descripción / Motivo (opcional)</label>
                     <input type="text" name="descripcion" class="form-control" placeholder="Ej: Arreglo de motor...">
+                </div>
+
+                <!-- NUEVO CAMPO OBSERVACIONES -->
+                <div class="mb-4">
+                    <label class="form-label">Observaciones internas (opcional)</label>
+                    <textarea name="observaciones" class="form-control" rows="2" placeholder="Notas internas sobre el préstamo..."></textarea>
                 </div>
 
                 <button type="submit" class="btn-guardar"><i class="fas fa-save"></i> Guardar Préstamo</button>
@@ -282,10 +282,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const inputInteres = document.getElementById('interes');
         const inputCuotas = document.getElementById('cuotas');
         const checkAuto = document.getElementById('calculo_auto');
-
         const divManual = document.getElementById('div-cuota-manual');
         const inputManual = document.getElementById('valor_cuota_manual');
-
         const lblMonto = document.getElementById('lbl_monto');
         const lblInteres = document.getElementById('lbl_interes');
         const lblTotal = document.getElementById('lbl_total');
@@ -304,33 +302,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const cuotas = parseInt(inputCuotas.value) || 1;
 
             if (checkAuto.checked) {
-                // CÁLCULO AUTOMÁTICO
                 const montoInteres = monto * (interes / 100);
                 const total = monto + montoInteres;
                 const valorCuota = total / cuotas;
-
                 lblMonto.textContent = formatMoneda(monto);
                 lblInteres.textContent = formatMoneda(montoInteres);
                 lblTotal.textContent = formatMoneda(total);
                 lblCuota.textContent = formatMoneda(valorCuota);
             } else {
-                // CÁLCULO MANUAL
                 const cuotaManual = parseFloat(inputManual.value) || 0;
                 const total = cuotaManual * cuotas;
-
                 lblMonto.textContent = formatMoneda(monto);
-                lblInteres.textContent = "---"; // Ocultamos interés porque es manual
+                lblInteres.textContent = "---";
                 lblTotal.textContent = formatMoneda(total);
                 lblCuota.textContent = formatMoneda(cuotaManual);
             }
         }
 
-        // Evento para mostrar/ocultar el campo manual
         checkAuto.addEventListener('change', function() {
             if (this.checked) {
                 divManual.style.display = 'none';
                 inputManual.removeAttribute('required');
-                inputManual.value = ''; // Limpiamos
+                inputManual.value = '';
             } else {
                 divManual.style.display = 'block';
                 inputManual.setAttribute('required', 'required');
@@ -338,13 +331,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             calcular();
         });
 
-        // Escuchar cambios en los inputs
         inputMonto.addEventListener('input', calcular);
         inputInteres.addEventListener('input', calcular);
         inputCuotas.addEventListener('input', calcular);
         inputManual.addEventListener('input', calcular);
     </script>
-
 </body>
 
 </html>

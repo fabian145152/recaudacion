@@ -3,7 +3,6 @@ include_once "../funciones/funciones.php";
 $con = conexion();
 $con->set_charset("utf8mb4");
 
-// Procesar acción de "Marcar en Mora" (botón rápido)
 if (isset($_GET['mora']) && isset($_GET['id'])) {
     $id_mora = (int)$_GET['id'];
     $con->query("UPDATE prestamos SET estado_mora = 'EN MORA' WHERE id = $id_mora");
@@ -11,10 +10,8 @@ if (isset($_GET['mora']) && isset($_GET['id'])) {
     exit;
 }
 
-// Procesar acción de "Archivar" (cuando ya está pagado)
 if (isset($_GET['archivar']) && isset($_GET['id'])) {
     $id_archivar = (int)$_GET['id'];
-    // Solo se puede archivar si está pagado
     $check = $con->query("SELECT estado FROM prestamos WHERE id = $id_archivar")->fetch_assoc();
     if ($check && $check['estado'] === 'PAGADO') {
         $con->query("UPDATE prestamos SET estado = 'ARCHIVADO' WHERE id = $id_archivar");
@@ -23,23 +20,16 @@ if (isset($_GET['archivar']) && isset($_GET['id'])) {
     exit;
 }
 
-// === FILTRO: VER ACTIVOS O VER HISTORIAL ===
 $ver_historial = isset($_GET['historial']) && $_GET['historial'] == '1';
 
-// === OBTENER PRÉSTAMOS ===
 if ($ver_historial) {
-    // Historial: Muestra Pagados, Cancelados y Archivados
     $where_estado = "p.estado IN ('PAGADO', 'CANCELADO', 'ARCHIVADO')";
 } else {
-    // Principal: Muestra Activos y Pagados (para poder archivarlos)
     $where_estado = "p.estado IN ('ACTIVO', 'PAGADO')";
 }
 
 $sql = "
-    SELECT 
-        p.*,
-        c.nombre AS chofer_nombre,
-        c.foto AS chofer_foto
+    SELECT p.*, c.nombre AS chofer_nombre, c.foto AS chofer_foto
     FROM prestamos p
     INNER JOIN choferes c ON c.id = p.chofer_id
     WHERE $where_estado
@@ -47,7 +37,15 @@ $sql = "
 ";
 $prestamos = $con->query($sql)->fetch_all(MYSQLI_ASSOC);
 
-// === ESTADÍSTICAS ===
+// Traer todos los pagos para mostrarlos
+$pagos_por_prestamo = [];
+$res_pagos = $con->query("SELECT prestamo_id, monto, fecha_pago FROM prestamos_pagos ORDER BY fecha_pago ASC");
+if ($res_pagos) {
+    while ($pago = $res_pagos->fetch_assoc()) {
+        $pagos_por_prestamo[(int)$pago['prestamo_id']][] = $pago;
+    }
+}
+
 $total_activos = 0;
 $monto_total = 0;
 $en_mora = 0;
@@ -115,9 +113,9 @@ if (!$ver_historial) {
             flex-wrap: wrap;
         }
 
-        .btn-nuevo {
-            background: linear-gradient(135deg, #fd7e14, #e83e8c);
-            color: white;
+        .btn-nuevo,
+        .btn-filtro,
+        .btn-excel {
             text-decoration: none;
             padding: 8px 16px;
             border-radius: 8px;
@@ -127,6 +125,13 @@ if (!$ver_historial) {
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-nuevo {
+            background: linear-gradient(135deg, #fd7e14, #e83e8c);
+            color: white;
         }
 
         .btn-nuevo:hover {
@@ -138,15 +143,6 @@ if (!$ver_historial) {
         .btn-filtro {
             background: #eef1f7;
             color: #555;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
             border: 1px solid #dfe6ef;
         }
 
@@ -155,10 +151,15 @@ if (!$ver_historial) {
             color: #333;
         }
 
-        .btn-filtro.active {
-            background: #667eea;
+        .btn-excel {
+            background: #28a745;
             color: white;
-            border-color: #667eea;
+        }
+
+        .btn-excel:hover {
+            background: #218838;
+            color: white;
+            transform: translateY(-1px);
         }
 
         .stats-grid {
@@ -239,10 +240,17 @@ if (!$ver_historial) {
             border-left: 4px solid #fd7e14;
             transition: all 0.2s;
             position: relative;
+            flex-direction: column;
+        }
+
+        .card-fila-principal {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
         }
 
         .prestamo-card:hover {
-            transform: translateY(-2px);
             box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
         }
 
@@ -251,7 +259,6 @@ if (!$ver_historial) {
             background: #f8fdf9;
         }
 
-        .prestamo-card.cancelado,
         .prestamo-card.archivado {
             border-left-color: #6c757d;
             opacity: 0.8;
@@ -304,6 +311,16 @@ if (!$ver_historial) {
             text-overflow: ellipsis;
         }
 
+        .prestamo-obs {
+            font-size: 0.75rem;
+            color: #0c5460;
+            background: #e2f1f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 3px;
+        }
+
         .prestamo-monto {
             text-align: right;
             min-width: 110px;
@@ -316,11 +333,6 @@ if (!$ver_historial) {
             font-size: 1.1rem;
             font-weight: 700;
             color: #e83e8c;
-        }
-
-        .prestamo-card.pagado .prestamo-monto .monto,
-        .prestamo-card.archivado .prestamo-monto .monto {
-            color: #28a745;
         }
 
         .prestamo-monto .fecha {
@@ -344,7 +356,6 @@ if (!$ver_historial) {
             color: #333;
         }
 
-        /* Barra de progreso de cuotas */
         .progreso-container {
             margin-top: 5px;
             width: 100%;
@@ -382,7 +393,6 @@ if (!$ver_historial) {
             color: #155724;
         }
 
-        .badge-cancelado,
         .badge-archivado {
             background: #e2e3e5;
             color: #383d41;
@@ -434,18 +444,10 @@ if (!$ver_historial) {
             color: white;
         }
 
-        .btn-pagar:hover {
-            background: #218838;
-        }
-
         .btn-mora {
             background: #fff3cd;
             color: #856404;
             border: 1px solid #ffeeba;
-        }
-
-        .btn-mora:hover {
-            background: #ffeeba;
         }
 
         .btn-archivar {
@@ -453,8 +455,43 @@ if (!$ver_historial) {
             color: white;
         }
 
-        .btn-archivar:hover {
-            background: #5a6268;
+        .btn-historial-pagos {
+            background: #17a2b8;
+            color: white;
+        }
+
+        /* Panel de pagos desplegable */
+        .pagos-lista {
+            width: 100%;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+            display: none;
+        }
+
+        .pagos-lista.activo {
+            display: block;
+        }
+
+        .pago-fila {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            background: #f8f9fc;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            color: #555;
+        }
+
+        .pago-fila .fecha-pago {
+            font-weight: 700;
+            color: #17a2b8;
+        }
+
+        .pago-fila .monto-pago {
+            font-weight: 700;
+            color: #28a745;
         }
 
         .empty-state {
@@ -473,13 +510,15 @@ if (!$ver_historial) {
     <?php include "menu.php"; ?>
 
     <div class="page-wrapper">
-
         <div class="page-header">
             <h1 class="page-title">
                 <i class="fas fa-file-invoice-dollar"></i>
                 <?php echo $ver_historial ? 'Historial de Préstamos' : 'Préstamos y Deudas'; ?>
             </h1>
             <div class="header-botones">
+                <button type="button" onclick="exportarExcelPro()" class="btn-excel" <?php echo empty($prestamos) ? 'disabled' : ''; ?>>
+                    <i class="fas fa-file-excel"></i> Exportar Excel
+                </button>
                 <?php if ($ver_historial): ?>
                     <a href="prestamos.php" class="btn-filtro"><i class="fas fa-arrow-left"></i> Volver a Activos</a>
                 <?php else: ?>
@@ -491,7 +530,7 @@ if (!$ver_historial) {
 
         <?php if (isset($_GET['msg']) && $_GET['msg'] === 'pagado'): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert" style="border-left: 4px solid #28a745; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
-                <i class="fas fa-check-circle"></i> <b>¡Cuota registrada con éxito!</b> Se descontó automáticamente de la cuenta corriente.
+                <i class="fas fa-check-circle"></i> <b>¡Cuota registrada con éxito!</b>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
@@ -532,85 +571,278 @@ if (!$ver_historial) {
                 <?php foreach ($prestamos as $p):
                     $clase_estado = strtolower($p['estado']);
                     if ($p['estado_mora'] === 'EN MORA' && $p['estado'] === 'ACTIVO') $clase_estado = 'mora';
-
                     $porcentaje_pagado = ($p['cuotas'] > 0) ? ($p['cuotas_pagas'] / $p['cuotas']) * 100 : 0;
+                    $pagos_prestamo = $pagos_por_prestamo[(int)$p['id']] ?? [];
                 ?>
                     <div class="prestamo-card <?php echo $clase_estado; ?>">
 
-                        <div class="prestamo-foto">
-                            <?php if (!empty($p['chofer_foto'])): ?>
-                                <img src="../images/<?php echo htmlspecialchars($p['chofer_foto']); ?>" alt="Foto">
-                            <?php else: ?>
-                                <div class="sin-foto"><i class="fas fa-user"></i></div>
-                            <?php endif; ?>
-                        </div>
+                        <div class="card-fila-principal">
+                            <div class="prestamo-foto">
+                                <?php if (!empty($p['chofer_foto'])): ?>
+                                    <img src="../images/<?php echo htmlspecialchars($p['chofer_foto']); ?>" alt="Foto">
+                                <?php else: ?>
+                                    <div class="sin-foto"><i class="fas fa-user"></i></div>
+                                <?php endif; ?>
+                            </div>
 
-                        <div class="prestamo-info">
-                            <div class="prestamo-chofer">
-                                <?php echo htmlspecialchars($p['chofer_nombre']); ?>
-                                <?php if ($p['estado'] === 'ACTIVO'): ?>
-                                    <span class="badge-estado badge-<?php echo $clase_estado; ?>"><?php echo $p['estado_mora']; ?></span>
+                            <div class="prestamo-info">
+                                <div class="prestamo-chofer">
+                                    <?php echo htmlspecialchars($p['chofer_nombre']); ?>
+                                    <span class="badge-estado badge-<?php echo $clase_estado; ?>">
+                                        <?php echo ($p['estado'] === 'ACTIVO') ? $p['estado_mora'] : $p['estado']; ?>
+                                    </span>
                                     <?php if ($p['estado_mora'] === 'EN MORA'): ?>
                                         <span style="font-size:0.65rem; color:#dc3545; font-weight:700;"><i class="fas fa-history"></i> Tuvo mora</span>
                                     <?php endif; ?>
-                                <?php else: ?>
-                                    <span class="badge-estado badge-<?php echo $clase_estado; ?>"><?php echo $p['estado']; ?></span>
-                                    <?php if ($p['estado_mora'] === 'EN MORA'): ?>
-                                        <span style="font-size:0.65rem; color:#dc3545; font-weight:700; background:#f8d7da; padding:2px 6px; border-radius:4px;"><i class="fas fa-exclamation-triangle"></i> Tuvo mora</span>
+                                </div>
+                                <div class="prestamo-desc"><?php echo htmlspecialchars($p['descripcion'] ?: 'Sin descripción'); ?></div>
+
+                                <!-- MOSTRAR OBSERVACIONES SI HAY -->
+                                <?php if (!empty($p['observaciones'])): ?>
+                                    <div class="prestamo-obs"><i class="fas fa-comment-dots"></i> <?php echo htmlspecialchars($p['observaciones']); ?></div>
+                                <?php endif; ?>
+
+                                <div class="progreso-container">
+                                    <div class="progreso-barra <?php echo ($porcentaje_pagado >= 100) ? 'completo' : ''; ?>" style="width: <?php echo $porcentaje_pagado; ?>%"></div>
+                                </div>
+                                <div style="font-size: 0.65rem; color: #888; margin-top: 2px;">
+                                    Pagadas: <?php echo $p['cuotas_pagas']; ?> / <?php echo $p['cuotas']; ?> cuotas
+                                </div>
+                            </div>
+
+                            <div class="prestamo-monto">
+                                <div class="monto">$<?php echo number_format($p['monto_total'], 0, ',', '.'); ?></div>
+                                <div class="fecha">Inicio: <?php echo date('d/m/Y', strtotime($p['fecha'])); ?></div>
+                            </div>
+
+                            <div class="prestamo-detalles">
+                                <div class="detalle-fila">Valor Cuota: <span>$<?php echo number_format($p['valor_cuota'], 0, ',', '.'); ?></span></div>
+                                <div class="detalle-fila">Interés: <span><?php echo $p['interes']; ?>%</span></div>
+                            </div>
+
+                            <div class="acciones-botones">
+                                <?php if ($p['estado'] === 'ACTIVO'): ?>
+                                    <form action="prestamo_pagar.php" method="POST" style="margin:0;">
+                                        <input type="hidden" name="prestamo_id" value="<?php echo $p['id']; ?>">
+                                        <button type="submit" class="btn-accion btn-pagar" title="Pagar cuota" onclick="return confirm('¿Registrar el pago de la cuota por $<?php echo number_format($p['valor_cuota'], 0, ',', '.'); ?>?');">
+                                            <i class="fas fa-check"></i> Pagar
+                                        </button>
+                                    </form>
+                                    <?php if ($p['estado_mora'] === 'AL DIA'): ?>
+                                        <a href="prestamos.php?mora=1&id=<?php echo $p['id']; ?>" class="btn-accion btn-mora" title="Marcar en mora" onclick="return confirm('¿Marcar este préstamo como EN MORA?');"><i class="fas fa-exclamation-triangle"></i></a>
                                     <?php endif; ?>
-                                <?php endif; ?>
-                            </div>
-                            <div class="prestamo-desc"><?php echo htmlspecialchars($p['descripcion'] ?: 'Sin descripción'); ?></div>
-
-                            <!-- PROGRESO -->
-                            <div class="progreso-container">
-                                <div class="progreso-barra <?php echo ($porcentaje_pagado >= 100) ? 'completo' : ''; ?>" style="width: <?php echo $porcentaje_pagado; ?>%"></div>
-                            </div>
-                            <div style="font-size: 0.65rem; color: #888; margin-top: 2px;">
-                                Pagadas: <?php echo $p['cuotas_pagas']; ?> / <?php echo $p['cuotas']; ?> cuotas
-                            </div>
-                        </div>
-
-                        <div class="prestamo-monto">
-                            <div class="monto">$<?php echo number_format($p['monto_total'], 0, ',', '.'); ?></div>
-                            <div class="fecha">Inicio: <?php echo date('d/m/Y', strtotime($p['fecha'])); ?></div>
-                        </div>
-
-                        <div class="prestamo-detalles">
-                            <div class="detalle-fila">Valor Cuota: <span>$<?php echo number_format($p['valor_cuota'], 0, ',', '.'); ?></span></div>
-                            <div class="detalle-fila">Interés: <span><?php echo $p['interes']; ?>%</span></div>
-                        </div>
-
-                        <!-- BOTONERA -->
-                        <div class="acciones-botones">
-                            <?php if ($p['estado'] === 'ACTIVO'): ?>
-                                <form action="prestamo_pagar.php" method="POST" style="margin:0;">
-                                    <input type="hidden" name="prestamo_id" value="<?php echo $p['id']; ?>">
-                                    <button type="submit" class="btn-accion btn-pagar" title="Pagar cuota de $<?php echo number_format($p['valor_cuota'], 0, ',', '.'); ?>" onclick="return confirm('¿Registrar el pago de la cuota por $<?php echo number_format($p['valor_cuota'], 0, ',', '.'); ?>? Se descontará de la cuenta corriente.');">
-                                        <i class="fas fa-check"></i> Pagar
-                                    </button>
-                                </form>
-                                <?php if ($p['estado_mora'] === 'AL DIA'): ?>
-                                    <a href="prestamos.php?mora=1&id=<?php echo $p['id']; ?>" class="btn-accion btn-mora" title="Marcar en mora" onclick="return confirm('¿Marcar este préstamo como EN MORA?');">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                    </a>
+                                <?php elseif ($p['estado'] === 'PAGADO'): ?>
+                                    <a href="prestamos.php?archivar=1&id=<?php echo $p['id']; ?>" class="btn-accion btn-archivar" title="Mover al historial" onclick="return confirm('¿Archivar este préstamo?');"><i class="fas fa-box"></i> Archivar</a>
                                 <?php endif; ?>
 
-                            <?php elseif ($p['estado'] === 'PAGADO'): ?>
-                                <!-- Botón para ARCHIVAR (Eliminar del listado principal) -->
-                                <a href="prestamos.php?archivar=1&id=<?php echo $p['id']; ?>" class="btn-accion btn-archivar" title="Mover al historial" onclick="return confirm('¿Archivar este préstamo? Se moverá al historial.');">
-                                    <i class="fas fa-box"></i> Archivar
-                                </a>
-                            <?php endif; ?>
+                                <?php if (!empty($pagos_prestamo)): ?>
+                                    <button type="button" class="btn-accion btn-historial-pagos" onclick="togglePagos(<?php echo $p['id']; ?>)"><i class="fas fa-list"></i> Pagos</button>
+                                <?php endif; ?>
+                            </div>
                         </div>
+
+                        <!-- PANEL DE HISTORIAL DE PAGOS -->
+                        <?php if (!empty($pagos_prestamo)): ?>
+                            <div class="pagos-lista" id="pagos-<?php echo $p['id']; ?>">
+                                <div style="font-size:0.75rem; font-weight:700; color:#888; text-transform:uppercase; margin-bottom:5px;">Historial de cuotas pagadas:</div>
+                                <?php foreach ($pagos_prestamo as $pago): ?>
+                                    <div class="pago-fila">
+                                        <span><i class="far fa-calendar-alt"></i> <span class="fecha-pago"><?php echo date('d/m/Y', strtotime($pago['fecha_pago'])); ?></span></span>
+                                        <span class="monto-pago">+ $<?php echo number_format($pago['monto'], 2, ',', '.'); ?></span>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
 
                     </div>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
-
     </div>
+
     <script src="../js/bootstrap.bundle.min.js"></script>
+    <!-- LIBRERÍA EXCELJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+        function togglePagos(id) {
+            const panel = document.getElementById('pagos-' + id);
+            if (panel.classList.contains('activo')) {
+                panel.classList.remove('activo');
+            } else {
+                panel.classList.add('activo');
+            }
+        }
+
+        async function exportarExcelPro() {
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Prestamos');
+
+            // Definir columnas
+            worksheet.columns = [{
+                    header: 'ID',
+                    key: 'id',
+                    width: 6
+                },
+                {
+                    header: 'CHOFER',
+                    key: 'chofer',
+                    width: 25
+                },
+                {
+                    header: 'FECHA INICIO',
+                    key: 'fecha',
+                    width: 12
+                },
+                {
+                    header: 'ESTADO',
+                    key: 'estado',
+                    width: 12
+                },
+                {
+                    header: 'DESCRIPCIÓN',
+                    key: 'desc',
+                    width: 25
+                },
+                {
+                    header: 'OBSERVACIONES',
+                    key: 'obs',
+                    width: 25
+                },
+                {
+                    header: 'MONTO BASE',
+                    key: 'monto',
+                    width: 12
+                },
+                {
+                    header: 'INTERÉS (%)',
+                    key: 'interes',
+                    width: 10
+                },
+                {
+                    header: 'TOTAL A PAGAR',
+                    key: 'total',
+                    width: 14
+                },
+                {
+                    header: 'CUOTAS PAGADAS',
+                    key: 'pagadas',
+                    width: 10
+                },
+                {
+                    header: 'VALOR CUOTA',
+                    key: 'valor',
+                    width: 12
+                },
+                {
+                    header: 'SALDO PENDIENTE',
+                    key: 'saldo',
+                    width: 14
+                }
+            ];
+
+            // Estilo del encabezado
+            worksheet.getRow(1).font = {
+                bold: true,
+                color: {
+                    argb: 'FFFFFFFF'
+                }
+            };
+            worksheet.getRow(1).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: {
+                    argb: 'FF667EEA'
+                }
+            };
+            worksheet.getRow(1).alignment = {
+                vertical: 'middle',
+                horizontal: 'center'
+            };
+
+            // Datos de PHP a JS
+            const datosPHP = <?php echo json_encode($prestamos); ?>;
+
+            datosPHP.forEach(p => {
+                const saldo = p.monto_total - (p.cuotas_pagas * p.valor_cuota);
+                const estadoTexto = (p.estado === 'ACTIVO') ? (p.estado_mora === 'EN MORA' ? 'EN MORA' : 'AL DÍA') : p.estado;
+
+                const fila = worksheet.addRow({
+                    id: p.id,
+                    chofer: p.chofer_nombre,
+                    fecha: p.fecha.split('-').reverse().join('/'),
+                    estado: estadoTexto,
+                    desc: p.descripcion || '-',
+                    obs: p.observaciones || '-',
+                    monto: parseFloat(p.monto),
+                    interes: parseFloat(p.interes) + '%',
+                    total: parseFloat(p.monto_total),
+                    pagadas: p.cuotas_pagas + ' / ' + p.cuotas,
+                    valor: parseFloat(p.valor_cuota),
+                    saldo: saldo > 0 ? saldo : 0
+                });
+
+                // Formato de moneda
+                ['monto', 'total', 'valor', 'saldo'].forEach(col => {
+                    fila.getCell(col).numFmt = '"$"#,##0.00';
+                });
+
+                // Colores según el estado
+                if (estadoTexto === 'EN MORA') {
+                    fila.getCell('estado').fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: {
+                            argb: 'FFFFC7CE'
+                        }
+                    };
+                    fila.getCell('estado').font = {
+                        color: {
+                            argb: 'FF9C0006'
+                        }
+                    };
+                } else if (estadoTexto === 'AL DÍA') {
+                    fila.getCell('estado').fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: {
+                            argb: 'FFC6EFCE'
+                        }
+                    };
+                    fila.getCell('estado').font = {
+                        color: {
+                            argb: 'FF006100'
+                        }
+                    };
+                } else if (estadoTexto === 'PAGADO') {
+                    fila.getCell('estado').fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: {
+                            argb: 'FFD4EDDA'
+                        }
+                    };
+                }
+
+                fila.getCell('estado').alignment = {
+                    horizontal: 'center'
+                };
+                fila.getCell('id').alignment = {
+                    horizontal: 'center'
+                };
+                fila.getCell('pagadas').alignment = {
+                    horizontal: 'center'
+                };
+            });
+
+            // Descargar
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+            saveAs(blob, 'Reporte_Prestamos.xlsx');
+        }
+    </script>
 </body>
 
 </html>

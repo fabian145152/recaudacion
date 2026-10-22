@@ -95,13 +95,11 @@ $fecha = $_GET['fecha'] ?? date('Y-m-d');
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
     $fecha = date('Y-m-d');
 }
-// No permitir fechas futuras
 if ($fecha > date('Y-m-d')) {
     $fecha = date('Y-m-d');
 }
 
 $es_hoy = ($fecha === date('Y-m-d'));
-
 $es_nueva_pestana = isset($_GET['nueva']) && $_GET['nueva'] == '1';
 $param_nueva = $es_nueva_pestana ? '&nueva=1' : '';
 
@@ -113,9 +111,7 @@ $reca = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 $abono_diario_actual = floatval($reca['abono_diario'] ?? 0);
-$paga_actual         = floatval($reca['paga'] ?? 0);
 $voucher_actual      = floatval($reca['voucher'] ?? 0);
-$porcent_actual      = floatval($reca['porcent'] ?? 0);
 $comision_actual     = floatval($reca['comision'] ?? 0);
 $total_actual        = floatval($reca['total'] ?? 0);
 $mp_actual           = floatval($reca['mp'] ?? 0);
@@ -136,6 +132,7 @@ $yaCargado = ($reca !== null);
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../css/all.min.css">
     <style>
+        /* ... (todo el CSS igual que antes) ... */
         * {
             box-sizing: border-box;
         }
@@ -478,6 +475,7 @@ $yaCargado = ($reca !== null);
             border-radius: 8px;
             padding: 10px 14px;
             margin-bottom: 6px;
+            position: relative;
         }
 
         .ya-cargado-panel .titulo {
@@ -492,12 +490,23 @@ $yaCargado = ($reca !== null);
             justify-content: space-between;
         }
 
-        .ya-cargado-panel .titulo .badge-acumulado {
-            background: #17a2b8;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.68rem;
+        .btn-editar-carga {
+            background: #ffc107;
+            color: #856404;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-editar-carga:hover {
+            background: #ffca2c;
         }
 
         .ya-cargado-filas {
@@ -606,15 +615,10 @@ $yaCargado = ($reca !== null);
     <?php include "menu.php"; ?>
 
     <div class="app-container">
-
         <div class="turno-banner <?php echo ($turno === 'DIA') ? 'turno-dia' : 'turno-noche'; ?>">
             <div class="turno-left">
                 <div class="turno-icon">
-                    <?php if ($turno === 'DIA'): ?>
-                        <i class="fas fa-sun"></i>
-                    <?php else: ?>
-                        <i class="fas fa-moon"></i>
-                    <?php endif; ?>
+                    <?php if ($turno === 'DIA'): ?><i class="fas fa-sun"></i><?php else: ?><i class="fas fa-moon"></i><?php endif; ?>
                 </div>
                 <h1 class="turno-label">TURNO <?php echo htmlspecialchars($turno); ?></h1>
             </div>
@@ -623,58 +627,45 @@ $yaCargado = ($reca !== null);
                 &nbsp;·&nbsp; <?php echo htmlspecialchars($nombre); ?>
                 &nbsp;·&nbsp; <?php echo htmlspecialchars($marca . ' ' . $modelo); ?>
                 &nbsp;·&nbsp;
-                <span class="fecha-destacada">
+                <!-- Fecha destacada con input date -->
+
+                <span class="fecha-destacada" style="display: flex; align-items: center;">
                     <i class="fas fa-calendar-day"></i>
-                    <input type="date"
-                        id="selector-fecha"
-                        value="<?php echo htmlspecialchars($fecha); ?>"
-                        max="<?php echo date('Y-m-d'); ?>"
-                        onchange="cambiarFecha(this.value)">
-                    <?php if ($es_hoy): ?>
-                        <span style="font-size:0.7rem; opacity:0.85;">HOY</span>
-                    <?php endif; ?>
+                    <span style="font-weight: 700; margin: 0 5px; text-transform: uppercase;">
+                        <?php
+                        // Array para traducir los días al español
+                        $dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                        $dia_semana = $dias[date('w', strtotime($fecha))];
+                        echo $dia_semana;
+                        ?>
+                    </span>
+                    <input type="date" id="selector-fecha" value="<?php echo htmlspecialchars($fecha); ?>" max="<?php echo date('Y-m-d'); ?>" onchange="cambiarFecha(this.value)" style="width: 115px;">
+                    <?php if ($es_hoy): ?><span style="font-size:0.7rem; opacity:0.85; margin-left: 5px;">HOY</span><?php endif; ?>
                 </span>
+
+                <!-- ------------------------------ -->
                 <?php if (!$es_hoy): ?>
-                    <a href="?<?php
-                                $params = $_GET;
+                    <a href="?<?php $params = $_GET;
                                 $params['fecha'] = date('Y-m-d');
-                                echo htmlspecialchars(http_build_query($params));
-                                ?>" class="btn-hoy-banner">
-                        <i class="fas fa-undo"></i> HOY
-                    </a>
+                                echo htmlspecialchars(http_build_query($params)); ?>" class="btn-hoy-banner"><i class="fas fa-undo"></i> HOY</a>
                 <?php endif; ?>
             </div>
         </div>
 
         <?php if (!$es_hoy): ?>
-            <div class="aviso-otro-dia">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>
-                    <strong>Atención:</strong> estás cargando importes del día
-                    <strong><?php echo date('d/m/Y', strtotime($fecha)); ?></strong>, no de hoy.
-                </span>
-            </div>
+            <div class="aviso-otro-dia"><i class="fas fa-exclamation-triangle"></i><span><strong>Atención:</strong> estás cargando importes del día <strong><?php echo date('d/m/Y', strtotime($fecha)); ?></strong>, no de hoy.</span></div>
         <?php endif; ?>
 
         <?php if ($yaCargado): ?>
-            <div class="aviso-compacto">
-                <i class="fas fa-info-circle"></i>
-                <span><strong>Ya hay movimientos cargados en esta fecha.</strong> Lo que ingreses ahora se <strong>sumará</strong> a lo ya cargado.</span>
-            </div>
+            <div class="aviso-compacto"><i class="fas fa-info-circle"></i><span><strong>Ya hay movimientos cargados en esta fecha.</strong> Lo que ingreses ahora se <strong>sumará</strong> a lo ya cargado.</span></div>
         <?php endif; ?>
 
         <?php if ($saldo_deudor > 0): ?>
-            <div class="aviso-deuda">
-                <i class="fas fa-exclamation-circle"></i>
-                <span>⚠️ Este chofer debe <strong>$<?php echo number_format($saldo_deudor, 2, ',', '.'); ?></strong> de períodos anteriores.</span>
-            </div>
+            <div class="aviso-deuda"><i class="fas fa-exclamation-circle"></i><span>⚠️ Este chofer debe <strong>$<?php echo number_format($saldo_deudor, 2, ',', '.'); ?></strong> de períodos anteriores.</span></div>
         <?php endif; ?>
 
         <?php if ($saldo_a_favor > 0): ?>
-            <div class="aviso-a-favor">
-                <i class="fas fa-check-circle"></i>
-                <span>💰 Este chofer tiene <strong>$<?php echo number_format($saldo_a_favor, 2, ',', '.'); ?></strong> a favor.</span>
-            </div>
+            <div class="aviso-a-favor"><i class="fas fa-check-circle"></i><span>💰 Este chofer tiene <strong>$<?php echo number_format($saldo_a_favor, 2, ',', '.'); ?></strong> a favor.</span></div>
         <?php endif; ?>
 
         <form id="formulario" action="guarda_importes.php" method="post" enctype="multipart/form-data">
@@ -683,19 +674,21 @@ $yaCargado = ($reca !== null);
             <input type="hidden" name="chofer_id" value="<?php echo htmlspecialchars($chofer_id); ?>">
             <input type="hidden" name="vehiculo_id" value="<?php echo htmlspecialchars($vehiculo_id); ?>">
             <input type="hidden" name="fecha" value="<?php echo htmlspecialchars($fecha); ?>">
+
+            <!-- ⚠️ ESTE ES EL CAMPO QUE FALTABA -->
+            <input type="hidden" name="modo_edicion" id="modo_edicion" value="0">
+
             <?php if ($es_nueva_pestana): ?>
                 <input type="hidden" name="nueva" value="1">
             <?php endif; ?>
 
             <div class="contenido-grid">
-
                 <!-- COL 1: CHOFER -->
                 <div class="card">
                     <h6><i class="fas fa-user"></i> Chofer</h6>
                     <div class="foto-chofer">
                         <label for="inputFoto1" style="cursor:pointer;">
-                            <img id="previewFoto1"
-                                src="<?php echo !empty($foto) ? '../images/' . htmlspecialchars($foto) : 'https://via.placeholder.com/75/aaaaaa/ffffff?text=?'; ?>">
+                            <img id="previewFoto1" src="<?php echo !empty($foto) ? '../images/' . htmlspecialchars($foto) : 'https://via.placeholder.com/75/aaaaaa/ffffff?text=?'; ?>">
                         </label>
                         <input type="file" id="inputFoto1" name="foto_chofer" accept="image/*" style="display:none;">
                         <small>Clic para cambiar</small>
@@ -736,46 +729,31 @@ $yaCargado = ($reca !== null);
                 <!-- COL 3: IMPORTES -->
                 <div class="card">
                     <h6><i class="fas fa-money-bill-wave"></i> Importes del Día</h6>
-
                     <div class="importes-grid">
-
                         <!-- ABONO DIARIO -->
                         <div class="campo campo-abono">
                             <label><i class="fas fa-file-invoice-dollar"></i> Abono diario (lo que debe pagar hoy)</label>
-                            <input type="number" id="abono_diario" name="abono_diario" step="0.01"
-                                value="<?php echo ($abono_diario_actual > 0) ? $abono_diario_actual : '' ?>"
-                                placeholder="0.00">
+                            <input type="number" id="abono_diario" name="abono_diario" step="0.01" value="<?php echo ($abono_diario_actual > 0) ? $abono_diario_actual : '' ?>" placeholder="0.00">
                         </div>
 
                         <!-- PANEL YA CARGADO -->
                         <?php if ($yaCargado): ?>
-                            <div class="ya-cargado-panel">
+                            <div class="ya-cargado-panel" id="panel-ya-cargado">
                                 <div class="titulo">
                                     <span><i class="fas fa-check-circle"></i> Ya cargado en esta fecha</span>
-                                    <span class="badge-acumulado">Se sumará a esto</span>
+                                    <button type="button" class="btn-editar-carga" onclick="habilitarEdicion()"><i class="fas fa-pen"></i> Editar / Corregir</button>
                                 </div>
                                 <div class="ya-cargado-filas">
-                                    <div class="ya-cargado-fila">
-                                        <span class="etiqueta">Voucher:</span>
-                                        <span class="valor">$<?php echo number_format($voucher_actual, 0, ',', '.'); ?></span>
-                                    </div>
-                                    <div class="ya-cargado-fila">
-                                        <span class="etiqueta">MP:</span>
-                                        <span class="valor">$<?php echo number_format($mp_actual, 0, ',', '.'); ?></span>
-                                    </div>
-                                    <div class="ya-cargado-fila">
-                                        <span class="etiqueta">FT:</span>
-                                        <span class="valor">$<?php echo number_format($ft_actual, 0, ',', '.'); ?></span>
-                                    </div>
+                                    <div class="ya-cargado-fila"><span class="etiqueta">Voucher:</span><span class="valor">$<?php echo number_format($voucher_actual, 0, ',', '.'); ?></span></div>
+                                    <div class="ya-cargado-fila"><span class="etiqueta">MP:</span><span class="valor">$<?php echo number_format($mp_actual, 0, ',', '.'); ?></span></div>
+                                    <div class="ya-cargado-fila"><span class="etiqueta">FT:</span><span class="valor">$<?php echo number_format($ft_actual, 0, ',', '.'); ?></span></div>
                                 </div>
                             </div>
                         <?php endif; ?>
 
-
-
                         <!-- NUEVOS MOVIMIENTOS -->
                         <div class="campo">
-                            <label>Nuevo Voucher</label>
+                            <label id="lbl-voucher">Nuevo Voucher</label>
                             <input type="number" id="voucher" name="voucher_nuevo" step="0.01" value="" placeholder="0.00">
                         </div>
                         <div class="campo campo-porcentaje">
@@ -784,14 +762,13 @@ $yaCargado = ($reca !== null);
                             <input type="hidden" id="porcentaje" name="porcentaje_nuevo" value="10">
                         </div>
                         <div class="campo">
-                            <label>Nuevo MP</label>
+                            <label id="lbl-mp">Nuevo MP</label>
                             <input type="number" id="mp" name="mp_nuevo" step="0.01" value="" placeholder="0.00">
                         </div>
                         <div class="campo">
-                            <label>Nuevo Ft (efectivo)</label>
+                            <label id="lbl-ft">Nuevo Ft (efectivo)</label>
                             <input type="number" id="ft" name="ft_nuevo" step="0.01" value="" placeholder="0.00">
                         </div>
-
 
                         <!-- READONLY -->
                         <div class="campo">
@@ -807,55 +784,43 @@ $yaCargado = ($reca !== null);
                         <div class="campo resultado-final">
                             <label style="font-size:0.85rem; font-weight:600; text-align:center;">Deuda / A favor del día</label>
                             <input type="number" id="faltante" step="0.01" readonly value="<?php echo $debe_actual ?>">
-                            <div class="ayuda">
-                                <span style="color:#dc3545;">Rojo = debe</span> ·
-                                <span style="color:#28a745;">Verde = a favor</span> ·
-                                Negro = al día
-                            </div>
+                            <div class="ayuda"><span style="color:#dc3545;">Rojo = debe</span> · <span style="color:#28a745;">Verde = a favor</span> · Negro = al día</div>
                         </div>
 
-                        <!-- NUEVO CAMPO OBSERVACIONES -->
+                        <!-- OBSERVACIONES -->
                         <div class="campo" style="grid-column: 1 / -1; margin-top: 5px;">
                             <label><i class="fas fa-comment-dots"></i> Observaciones del día</label>
                             <textarea name="observaciones" rows="2" placeholder="Escribí alguna nota o detalle del día..." style="resize: none;"><?php echo htmlspecialchars($observaciones_actual); ?></textarea>
                         </div>
-
                     </div>
                 </div>
             </div>
 
             <div class="acciones">
-                <a href="cargar_selector.php?fecha=<?php echo urlencode($fecha); ?><?php echo $param_nueva; ?>" class="btn-volver">
-                    <i class="fas fa-arrow-left"></i> Volver
-                </a>
-                <button type="submit" class="btn-enviar">
-                    <i class="fas fa-save"></i> Guardar y sumar
-                </button>
+                <a href="cargar_selector.php?fecha=<?php echo urlencode($fecha); ?><?php echo $param_nueva; ?>" class="btn-volver"><i class="fas fa-arrow-left"></i> Volver</a>
+                <button type="submit" class="btn-enviar"><i class="fas fa-save"></i> Guardar y sumar</button>
             </div>
         </form>
     </div>
 
     <script>
         const VOUCHER_PREV = <?php echo $voucher_actual; ?>;
-        const PORCENT_PREV = <?php echo $porcent_actual; ?>;
         const MP_PREV = <?php echo $mp_actual; ?>;
         const FT_PREV = <?php echo $ft_actual; ?>;
+        let modoEdicion = false;
 
         function calcular() {
             const abono = parseFloat(document.getElementById('abono_diario').value) || 0;
-
             const voucherNuevo = parseFloat(document.getElementById('voucher').value) || 0;
             const mpNuevo = parseFloat(document.getElementById('mp').value) || 0;
             const ftNuevo = parseFloat(document.getElementById('ft').value) || 0;
 
-            const voucherTotal = VOUCHER_PREV + voucherNuevo;
-            const mpTotal = MP_PREV + mpNuevo;
-            const ftTotal = FT_PREV + ftNuevo;
+            // Lógica clave: si es edición, pisa el valor. Si no, suma.
+            const voucherTotal = modoEdicion ? voucherNuevo : (VOUCHER_PREV + voucherNuevo);
+            const mpTotal = modoEdicion ? mpNuevo : (MP_PREV + mpNuevo);
+            const ftTotal = modoEdicion ? ftNuevo : (FT_PREV + ftNuevo);
 
-            // Comisión SIEMPRE 10%
-            const porcentaje = 10;
-
-            const comision = voucherTotal * porcentaje / 100;
+            const comision = voucherTotal * 10 / 100;
             const totalVoucher = voucherTotal - comision;
 
             document.getElementById('comi').value = comision.toFixed(2);
@@ -882,6 +847,37 @@ $yaCargado = ($reca !== null);
             }
         }
 
+        function habilitarEdicion() {
+            if (!confirm('Atención: Estás por editar los importes ya guardados. Los valores que pongas ahora REEMPLAZARÁN a los anteriores, no se sumarán. ¿Continuar?')) return;
+
+            modoEdicion = true;
+
+            // ⚠️ ESTA ES LA LÍNEA QUE ACTIVA EL MODO EDICIÓN EN EL SERVIDOR
+            document.getElementById('modo_edicion').value = '1';
+
+            // Precargar los inputs con los valores anteriores
+            document.getElementById('voucher').value = VOUCHER_PREV;
+            document.getElementById('mp').value = MP_PREV;
+            document.getElementById('ft').value = FT_PREV;
+            document.getElementById('abono_diario').value = <?php echo $abono_diario_actual; ?>;
+
+            // Ocultar el panel de "Ya cargado"
+            document.getElementById('panel-ya-cargado').style.display = 'none';
+
+            // Cambiar los labels
+            document.getElementById('lbl-voucher').innerText = "Editar Voucher Total";
+            document.getElementById('lbl-mp').innerText = "Editar MP Total";
+            document.getElementById('lbl-ft').innerText = "Editar FT Total";
+
+            // Resaltar los inputs
+            ['voucher', 'mp', 'ft'].forEach(id => {
+                document.getElementById(id).style.border = '2px solid #ffc107';
+                document.getElementById(id).style.backgroundColor = '#fff3cd';
+            });
+
+            calcular();
+        }
+
         function cambiarFecha(nuevaFecha) {
             const params = new URLSearchParams(window.location.search);
             params.set('fecha', nuevaFecha);
@@ -893,7 +889,6 @@ $yaCargado = ($reca !== null);
         });
         calcular();
 
-        // Bloquear rueda del mouse
         document.querySelectorAll('input[type=number]').forEach(function(input) {
             input.addEventListener('wheel', function(e) {
                 e.preventDefault();
@@ -902,7 +897,6 @@ $yaCargado = ($reca !== null);
             });
         });
 
-        // Preview foto
         document.getElementById('inputFoto1').addEventListener('change', e => {
             const file = e.target.files[0];
             if (file) {
@@ -912,7 +906,6 @@ $yaCargado = ($reca !== null);
             }
         });
     </script>
-
 </body>
 
 </html>
