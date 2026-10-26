@@ -64,8 +64,10 @@ $ft_prev           = floatval($reca_actual['ft'] ?? 0);
 $abono_diario_prev = floatval($reca_actual['abono_diario'] ?? 0);
 $obs_prev          = trim($reca_actual['observaciones'] ?? '');
 
-// Si el usuario no ingresó un abono diario nuevo, usar el que ya estaba
-if ($abono_diario <= 0 && $abono_diario_prev > 0) {
+// El formulario SIEMPRE envía abono_diario (aunque sea "" -> 0). Si el usuario
+// lo deja vacío o pone 0, respetamos ese valor. Solo restauramos el previo si
+// por algún motivo el campo NO vino en el POST (ej. submit externo).
+if (!array_key_exists('abono_diario', $_POST) && $abono_diario_prev > 0) {
     $abono_diario = $abono_diario_prev;
 }
 
@@ -223,7 +225,7 @@ try {
     // Formatear montos y fechas para el mensaje
     $fmt_deposito = number_format($deposito, 2, ',', '.');
     $fmt_abono = number_format($abono_diario, 2, ',', '.');
-    $fecha_mostrar = date('d/m/Y', strtotime($fecha)); // Convertimos AAAA-MM-DD a DD/MM/AAAA
+    $fecha_mostrar = date('d/m/Y', strtotime($fecha));
 
     $msj = $modo_edicion ? 'Importes corregidos' : 'Datos guardados';
 

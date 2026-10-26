@@ -103,9 +103,9 @@ $es_hoy = ($fecha === date('Y-m-d'));
 $es_nueva_pestana = isset($_GET['nueva']) && $_GET['nueva'] == '1';
 $param_nueva = $es_nueva_pestana ? '&nueva=1' : '';
 
-// === RECAUDACIÓN DEL DÍA ===
-$stmt = $con->prepare("SELECT * FROM recauda WHERE fecha = ? AND chofer_id = ?");
-$stmt->bind_param("si", $fecha, $chofer_id);
+// === RECAUDACIÓN DEL DÍA (filtrada por fecha + chofer + turno) ===
+$stmt = $con->prepare("SELECT * FROM recauda WHERE fecha = ? AND chofer_id = ? AND turno = ?");
+$stmt->bind_param("sis", $fecha, $chofer_id, $turno);
 $stmt->execute();
 $reca = $stmt->get_result()->fetch_assoc();
 $stmt->close();
@@ -132,7 +132,6 @@ $yaCargado = ($reca !== null);
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../css/all.min.css">
     <style>
-        /* ... (todo el CSS igual que antes) ... */
         * {
             box-sizing: border-box;
         }
@@ -627,13 +626,10 @@ $yaCargado = ($reca !== null);
                 &nbsp;·&nbsp; <?php echo htmlspecialchars($nombre); ?>
                 &nbsp;·&nbsp; <?php echo htmlspecialchars($marca . ' ' . $modelo); ?>
                 &nbsp;·&nbsp;
-                <!-- Fecha destacada con input date -->
-
                 <span class="fecha-destacada" style="display: flex; align-items: center;">
                     <i class="fas fa-calendar-day"></i>
                     <span style="font-weight: 700; margin: 0 5px; text-transform: uppercase;">
                         <?php
-                        // Array para traducir los días al español
                         $dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
                         $dia_semana = $dias[date('w', strtotime($fecha))];
                         echo $dia_semana;
@@ -643,7 +639,6 @@ $yaCargado = ($reca !== null);
                     <?php if ($es_hoy): ?><span style="font-size:0.7rem; opacity:0.85; margin-left: 5px;">HOY</span><?php endif; ?>
                 </span>
 
-                <!-- ------------------------------ -->
                 <?php if (!$es_hoy): ?>
                     <a href="?<?php $params = $_GET;
                                 $params['fecha'] = date('Y-m-d');
@@ -675,7 +670,6 @@ $yaCargado = ($reca !== null);
             <input type="hidden" name="vehiculo_id" value="<?php echo htmlspecialchars($vehiculo_id); ?>">
             <input type="hidden" name="fecha" value="<?php echo htmlspecialchars($fecha); ?>">
 
-            <!-- ⚠️ ESTE ES EL CAMPO QUE FALTABA -->
             <input type="hidden" name="modo_edicion" id="modo_edicion" value="0">
 
             <?php if ($es_nueva_pestana): ?>
@@ -744,6 +738,7 @@ $yaCargado = ($reca !== null);
                                     <button type="button" class="btn-editar-carga" onclick="habilitarEdicion()"><i class="fas fa-pen"></i> Editar / Corregir</button>
                                 </div>
                                 <div class="ya-cargado-filas">
+                                    <div class="ya-cargado-fila"><span class="etiqueta">Abono diario:</span><span class="valor">$<?php echo number_format($abono_diario_actual, 0, ',', '.'); ?></span></div>
                                     <div class="ya-cargado-fila"><span class="etiqueta">Voucher:</span><span class="valor">$<?php echo number_format($voucher_actual, 0, ',', '.'); ?></span></div>
                                     <div class="ya-cargado-fila"><span class="etiqueta">MP:</span><span class="valor">$<?php echo number_format($mp_actual, 0, ',', '.'); ?></span></div>
                                     <div class="ya-cargado-fila"><span class="etiqueta">FT:</span><span class="valor">$<?php echo number_format($ft_actual, 0, ',', '.'); ?></span></div>
@@ -815,7 +810,6 @@ $yaCargado = ($reca !== null);
             const mpNuevo = parseFloat(document.getElementById('mp').value) || 0;
             const ftNuevo = parseFloat(document.getElementById('ft').value) || 0;
 
-            // Lógica clave: si es edición, pisa el valor. Si no, suma.
             const voucherTotal = modoEdicion ? voucherNuevo : (VOUCHER_PREV + voucherNuevo);
             const mpTotal = modoEdicion ? mpNuevo : (MP_PREV + mpNuevo);
             const ftTotal = modoEdicion ? ftNuevo : (FT_PREV + ftNuevo);
@@ -852,14 +846,13 @@ $yaCargado = ($reca !== null);
 
             modoEdicion = true;
 
-            // ⚠️ ESTA ES LA LÍNEA QUE ACTIVA EL MODO EDICIÓN EN EL SERVIDOR
             document.getElementById('modo_edicion').value = '1';
 
-            // Precargar los inputs con los valores anteriores
+            // Precargar SOLO los campos que estaban vacíos con los valores anteriores.
+            // ⚠️ NO tocar abono_diario: ya viene cargado desde PHP y el usuario pudo haberlo cambiado.
             document.getElementById('voucher').value = VOUCHER_PREV;
             document.getElementById('mp').value = MP_PREV;
             document.getElementById('ft').value = FT_PREV;
-            document.getElementById('abono_diario').value = <?php echo $abono_diario_actual; ?>;
 
             // Ocultar el panel de "Ya cargado"
             document.getElementById('panel-ya-cargado').style.display = 'none';
@@ -874,6 +867,11 @@ $yaCargado = ($reca !== null);
                 document.getElementById(id).style.border = '2px solid #ffc107';
                 document.getElementById(id).style.backgroundColor = '#fff3cd';
             });
+
+            // Resaltar también el abono (porque ahora se puede editar como parte del modo edición)
+            const abonoInput = document.getElementById('abono_diario');
+            abonoInput.style.border = '2px solid #ffc107';
+            abonoInput.style.backgroundColor = '#fff3cd';
 
             calcular();
         }
