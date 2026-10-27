@@ -1,7 +1,20 @@
 <?php
+require_once __DIR__ . '/../funciones/auth.php';
+requireLogin();
+
 include_once "../funciones/funciones.php";
 $con = conexion();
 $con->set_charset("utf8mb4");
+
+// === AUTO-MIGRACIÓN (por si no corriste el SQL) ===
+$check_col1 = $con->query("SHOW COLUMNS FROM asignaciones_auto LIKE 'asignado_por'");
+if ($check_col1 && $check_col1->num_rows === 0) {
+    $con->query("ALTER TABLE asignaciones_auto ADD COLUMN asignado_por VARCHAR(100) DEFAULT NULL");
+}
+$check_col2 = $con->query("SHOW COLUMNS FROM asignaciones_auto LIKE 'asignado_fecha'");
+if ($check_col2 && $check_col2->num_rows === 0) {
+    $con->query("ALTER TABLE asignaciones_auto ADD COLUMN asignado_fecha DATETIME DEFAULT NULL");
+}
 
 if (!isset($_GET['q']) || !is_numeric($_GET['q'])) {
     die("ID de chofer inválido.");
@@ -68,9 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die("<script>alert('El chofer ya tiene ese auto en ese turno.'); window.history.back();</script>");
     }
 
+    // === QUIÉN Y CUÁNDO ===
+    $usuario_asigno = $_SESSION['nombre'] ?? ($_SESSION['usuario'] ?? 'Desconocido');
+    $fecha_asigno   = date('Y-m-d H:i:s');
+
     $con->begin_transaction();
     try {
-        // === CERRAR TODAS LAS ASIGNACIONES ACTIVAS DEL CHOFER (no solo una) ===
+        // === CERRAR TODAS LAS ASIGNACIONES ACTIVAS DEL CHOFER ===
         $stmt = $con->prepare("
             UPDATE asignaciones_auto 
             SET activa = 0, fecha_hasta = ? 
@@ -80,17 +97,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $stmt->close();
 
-        // === CREAR LA NUEVA ASIGNACIÓN ===
+        // === CREAR LA NUEVA ASIGNACIÓN (con datos de tracking) ===
         $stmt = $con->prepare("
-            INSERT INTO asignaciones_auto (chofer_id, vehiculo_id, turno, fecha_desde, activa, observaciones)
-            VALUES (?, ?, ?, ?, 1, ?)
+            INSERT INTO asignaciones_auto 
+                (chofer_id, vehiculo_id, turno, fecha_desde, activa, observaciones, asignado_por, asignado_fecha)
+            VALUES (?, ?, ?, ?, 1, ?, ?, ?)
         ");
-        $stmt->bind_param("iisss", $chofer_id, $nuevo_vehiculo_id, $turno, $fecha_cambio, $observaciones);
+        $stmt->bind_param(
+            "iisssss",
+            $chofer_id,
+            $nuevo_vehiculo_id,
+            $turno,
+            $fecha_cambio,
+            $observaciones,
+            $usuario_asigno,
+            $fecha_asigno
+        );
         $stmt->execute();
         $stmt->close();
 
         $con->commit();
-        echo "<script>alert('✅ Auto cambiado correctamente.'); window.location='taxis.php';</script>";
+
+        $msg = addslashes($usuario_asigno);
+        $fecha_msg = addslashes($fecha_asigno);
+
+        echo "<script>
+            alert('✅ Auto cambiado correctamente.\\n\\nAsignado por: $msg\\nFecha: $fecha_msg');
+            window.location='taxis.php';
+        </script>";
     } catch (Exception $e) {
         $con->rollback();
         echo "<script>alert('❌ Error: " . addslashes($e->getMessage()) . "'); window.history.back();</script>";

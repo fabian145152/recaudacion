@@ -1,7 +1,23 @@
 <?php
+require_once __DIR__ . '/../funciones/auth.php';
+requireLogin();
+
 include_once "../funciones/funciones.php";
 $con = conexion();
 $con->set_charset("utf8mb4");
+
+// === AUTO-CREAR COLUMNAS SI NO EXISTEN (por si no se corrió el ALTER) ===
+$col_creado_por = $con->query("SHOW COLUMNS FROM choferes LIKE 'creado_por'");
+if ($col_creado_por && $col_creado_por->num_rows === 0) {
+    $con->query("ALTER TABLE choferes ADD COLUMN creado_por VARCHAR(100) DEFAULT NULL");
+}
+$col_creado_fecha = $con->query("SHOW COLUMNS FROM choferes LIKE 'creado_fecha'");
+if ($col_creado_fecha && $col_creado_fecha->num_rows === 0) {
+    $con->query("ALTER TABLE choferes ADD COLUMN creado_fecha DATETIME DEFAULT NULL");
+}
+
+// === USUARIO LOGUEADO ===
+$usuario_nombre = $_SESSION['nombre'] ?? ($_SESSION['usuario'] ?? 'Desconocido');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -12,13 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dir      = trim($_POST['dir'] ?? '');
     $cp       = trim($_POST['cp'] ?? '');
 
-    // Asignación opcional
-    $vehiculo_id = (int)($_POST['vehiculo_id'] ?? 0);
-    $turno       = $_POST['turno'] ?? '';
+    $vehiculo_id   = (int)($_POST['vehiculo_id'] ?? 0);
+    $turno         = $_POST['turno'] ?? '';
     $observaciones = trim($_POST['observaciones'] ?? '');
 
     if (empty($nombre)) {
-        die("<script>alert('El nombre es obligatorio.'); window.history.back();</script>");
+        echo "<script>alert('El nombre es obligatorio.'); window.history.back();</script>";
+        exit;
     }
 
     // Foto
@@ -32,21 +48,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // === QUIÉN Y CUÁNDO ===
+    $creado_por   = $usuario_nombre;
+    $creado_fecha = date('Y-m-d H:i:s');
+
     $con->begin_transaction();
     try {
-        // Insertar chofer
         $stmt = $con->prepare("
-            INSERT INTO choferes (nombre, cel, email, barrio, dir, cp, foto, activo, fecha_alta)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 1, CURDATE())
+            INSERT INTO choferes 
+                (nombre, cel, email, barrio, dir, cp, foto, activo, fecha_alta, creado_por, creado_fecha)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 1, CURDATE(), ?, ?)
         ");
-        $stmt->bind_param("sssssss", $nombre, $cel, $email, $barrio, $dir, $cp, $foto_nombre);
-        $stmt->execute();
+        if (!$stmt) {
+            throw new Exception("Error al preparar el INSERT: " . $con->error);
+        }
+
+        $stmt->bind_param(
+            "sssssssss",
+            $nombre,
+            $cel,
+            $email,
+            $barrio,
+            $dir,
+            $cp,
+            $foto_nombre,
+            $creado_por,
+            $creado_fecha
+        );
+        if (!$stmt->execute()) {
+            throw new Exception("Error al guardar el chofer: " . $stmt->error);
+        }
         $chofer_id = $stmt->insert_id;
         $stmt->close();
 
-        // Asignar auto si se eligió uno y un turno
         if ($vehiculo_id > 0 && in_array($turno, ['DIA', 'NOCHE'])) {
-            // Verificar que el vehículo no esté ocupado en ese turno
             $check = $con->prepare("SELECT id FROM asignaciones_auto WHERE vehiculo_id = ? AND turno = ? AND activa = 1");
             $check->bind_param("is", $vehiculo_id, $turno);
             $check->execute();
@@ -65,12 +100,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $con->commit();
-        echo "<script>alert('✅ Chofer registrado.'); window.location='taxis.php';</script>";
+        echo "<script>alert('✅ Chofer registrado correctamente.\\n\\nCreado por: " . addslashes($creado_por) . "\\nFecha: " . addslashes($creado_fecha) . "'); window.location='taxis.php';</script>";
+        exit;
     } catch (Exception $e) {
         $con->rollback();
-        echo "<script>alert('❌ Error: " . addslashes($e->getMessage()) . "'); window.history.back();</script>";
+        $msg = addslashes($e->getMessage());
+        echo "<script>alert('❌ Error al guardar:\\n\\n$msg'); window.history.back();</script>";
+        exit;
     }
-    exit;
 }
 
 // Vehículos con sus turnos ocupados
@@ -270,31 +307,22 @@ $vehiculos = $con->query("
                                 <?php foreach ($vehiculos as $v):
                                     $ocupadoDia   = (int)$v['ocupado_dia'] > 0;
                                     $ocupadoNoche = (int)$v['ocupado_noche'] > 0;
-                                    $libreDia     = !$ocupadoDia;
-                                    $libreNoche   = !$ocupadoNoche;
 
-                                    // Definir el estado general y su clase CSS
                                     if ($ocupadoDia && $ocupadoNoche) {
-                                        $estado = 'completo';
                                         $prefijo = '🔴';
                                         $sufijo = ' — ❌ OCUPADO (DÍA y NOCHE)';
                                     } elseif ($ocupadoDia) {
-                                        $estado = 'dia';
                                         $prefijo = '🟠';
                                         $sufijo = ' — ⚠️ DÍA ocupado, 🌙 NOCHE libre';
                                     } elseif ($ocupadoNoche) {
-                                        $estado = 'noche';
                                         $prefijo = '🟣';
                                         $sufijo = ' — ⚠️ NOCHE ocupado, ☀️ DÍA libre';
                                     } else {
-                                        $estado = 'libre';
                                         $prefijo = '🟢';
                                         $sufijo = ' — ✅ LIBRE';
                                     }
                                 ?>
-                                    <option value="<?php echo $v['id']; ?>"
-                                        data-estado="<?php echo $estado; ?>"
-                                        class="opcion-<?php echo $estado; ?>">
+                                    <option value="<?php echo $v['id']; ?>">
                                         <?php echo $prefijo; ?>
                                         #<?php echo $v['movil']; ?>
                                         — <?php echo htmlspecialchars($v['marca'] . ' ' . $v['modelo']); ?>

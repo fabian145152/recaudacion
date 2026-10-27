@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/../funciones/auth.php';
+requireLogin();
+
 include_once "../funciones/funciones.php";
 $con = conexion();
 $con->set_charset("utf8mb4");
@@ -57,19 +60,28 @@ $stmt->execute();
 $asignacion = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
+// ⚠️ NO morimos si no hay asignación — permitimos cargar igual
+$sin_auto = false;
+
 if (!$asignacion) {
-    die("Este chofer no tiene un auto asignado. Asignale uno desde <a href='taxis.php'>Choferes</a>.");
-}
+    $sin_auto    = true;
+    $turno       = 'DIA';   // fallback (la columna es NOT NULL)
+    $vehiculo_id = 0;
+    $movil       = 0;
+    $marca       = '—';
+    $modelo      = '—';
+    $dominio     = '—';
+} else {
+    $turno       = strtoupper(trim($asignacion['turno'] ?? ''));
+    $vehiculo_id = (int)($asignacion['vehiculo_id'] ?? 0);
+    $movil       = (int)($asignacion['movil'] ?? 0);
+    $marca       = $asignacion['marca'] ?? '-';
+    $modelo      = $asignacion['modelo'] ?? '-';
+    $dominio     = $asignacion['dominio'] ?? '-';
 
-$turno       = strtoupper(trim($asignacion['turno'] ?? ''));
-$vehiculo_id = (int)($asignacion['vehiculo_id'] ?? 0);
-$movil       = (int)($asignacion['movil'] ?? 0);
-$marca       = $asignacion['marca'] ?? '-';
-$modelo      = $asignacion['modelo'] ?? '-';
-$dominio     = $asignacion['dominio'] ?? '-';
-
-if (!in_array($turno, ['DIA', 'NOCHE'])) {
-    die("Error: El chofer tiene un turno inválido en la asignación.");
+    if (!in_array($turno, ['DIA', 'NOCHE'])) {
+        die("Error: El chofer tiene un turno inválido en la asignación.");
+    }
 }
 
 $nombre    = $chofer['nombre'];
@@ -103,9 +115,9 @@ $es_hoy = ($fecha === date('Y-m-d'));
 $es_nueva_pestana = isset($_GET['nueva']) && $_GET['nueva'] == '1';
 $param_nueva = $es_nueva_pestana ? '&nueva=1' : '';
 
-// === RECAUDACIÓN DEL DÍA (filtrada por fecha + chofer + turno) ===
-$stmt = $con->prepare("SELECT * FROM recauda WHERE fecha = ? AND chofer_id = ? AND turno = ?");
-$stmt->bind_param("sis", $fecha, $chofer_id, $turno);
+// === RECAUDACIÓN DEL DÍA (por fecha + chofer, respeta UNIQUE de la tabla) ===
+$stmt = $con->prepare("SELECT * FROM recauda WHERE fecha = ? AND chofer_id = ?");
+$stmt->bind_param("si", $fecha, $chofer_id);
 $stmt->execute();
 $reca = $stmt->get_result()->fetch_assoc();
 $stmt->close();
@@ -120,6 +132,37 @@ $debe_actual         = floatval($reca['debe'] ?? 0);
 $observaciones_actual = $reca['observaciones'] ?? '';
 
 $yaCargado = ($reca !== null);
+
+// === MOVIMIENTOS DE CAJA DEL DÍA ===
+$movs_caja_dia = [];
+$tot_caja_mp = 0;
+$tot_caja_ft = 0;
+$caja_tabla_existe = false;
+
+try {
+    $check = $con->query("SHOW TABLES LIKE 'caja_movimientos'");
+    if ($check && $check->num_rows > 0) {
+        $caja_tabla_existe = true;
+        $stmt_caja = $con->prepare("SELECT * FROM caja_movimientos WHERE fecha = ? ORDER BY creado DESC");
+        if ($stmt_caja) {
+            $stmt_caja->bind_param("s", $fecha);
+            $stmt_caja->execute();
+            $movs_caja_dia = $stmt_caja->get_result()->fetch_all(MYSQLI_ASSOC);
+            $stmt_caja->close();
+        }
+    }
+} catch (Throwable $e) {
+    $caja_tabla_existe = false;
+}
+
+foreach ($movs_caja_dia as $m) {
+    $delta = ($m['tipo'] === 'INGRESO') ? floatval($m['monto']) : -floatval($m['monto']);
+    if ($m['medio'] === 'MP') {
+        $tot_caja_mp += $delta;
+    } else {
+        $tot_caja_ft += $delta;
+    }
+}
 ?>
 
 <!doctype html>
@@ -179,6 +222,10 @@ $yaCargado = ($reca !== null);
 
         .turno-banner.turno-noche {
             background: linear-gradient(135deg, #34495e, #2c3e50);
+        }
+
+        .turno-banner.turno-sinauto {
+            background: linear-gradient(135deg, #6c757d, #495057);
         }
 
         .turno-banner .turno-left {
@@ -321,6 +368,20 @@ $yaCargado = ($reca !== null);
             gap: 10px;
             font-size: 0.82rem;
             color: #155724;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .aviso-sin-auto {
+            background: linear-gradient(135deg, #e2e3e5, #d6d8db);
+            border-left: 4px solid #6c757d;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: #383d41;
             font-weight: 600;
             flex-shrink: 0;
         }
@@ -614,17 +675,28 @@ $yaCargado = ($reca !== null);
     <?php include "menu.php"; ?>
 
     <div class="app-container">
-        <div class="turno-banner <?php echo ($turno === 'DIA') ? 'turno-dia' : 'turno-noche'; ?>">
+        <div class="turno-banner <?php echo $sin_auto ? 'turno-sinauto' : ($turno === 'DIA' ? 'turno-dia' : 'turno-noche'); ?>">
             <div class="turno-left">
                 <div class="turno-icon">
-                    <?php if ($turno === 'DIA'): ?><i class="fas fa-sun"></i><?php else: ?><i class="fas fa-moon"></i><?php endif; ?>
+                    <?php if ($sin_auto): ?>
+                        <i class="fas fa-user-slash"></i>
+                    <?php elseif ($turno === 'DIA'): ?>
+                        <i class="fas fa-sun"></i>
+                    <?php else: ?>
+                        <i class="fas fa-moon"></i>
+                    <?php endif; ?>
                 </div>
-                <h1 class="turno-label">TURNO <?php echo htmlspecialchars($turno); ?></h1>
+                <h1 class="turno-label">
+                    <?php echo $sin_auto ? 'SIN AUTO' : 'TURNO ' . htmlspecialchars($turno); ?>
+                </h1>
             </div>
             <div class="turno-info">
-                Móvil <strong>#<?php echo htmlspecialchars($movil); ?></strong>
-                &nbsp;·&nbsp; <?php echo htmlspecialchars($nombre); ?>
-                &nbsp;·&nbsp; <?php echo htmlspecialchars($marca . ' ' . $modelo); ?>
+                <?php if (!$sin_auto): ?>
+                    Móvil <strong>#<?php echo htmlspecialchars($movil); ?></strong>
+                    &nbsp;·&nbsp; <?php echo htmlspecialchars($marca . ' ' . $modelo); ?>
+                    &nbsp;·&nbsp;
+                <?php endif; ?>
+                <?php echo htmlspecialchars($nombre); ?>
                 &nbsp;·&nbsp;
                 <span class="fecha-destacada" style="display: flex; align-items: center;">
                     <i class="fas fa-calendar-day"></i>
@@ -646,6 +718,17 @@ $yaCargado = ($reca !== null);
                 <?php endif; ?>
             </div>
         </div>
+
+        <?php if ($sin_auto): ?>
+            <div class="aviso-sin-auto">
+                <i class="fas fa-info-circle"></i>
+                <span>
+                    <strong>Este chofer no tiene un auto asignado actualmente.</strong>
+                    Podés cargar igual los importes (por ejemplo, para pagar deuda de días anteriores).
+                    Si querés asignarle un auto, andá a <a href="taxis.php" style="color:#383d41; font-weight:700; text-decoration:underline;">Choferes</a>.
+                </span>
+            </div>
+        <?php endif; ?>
 
         <?php if (!$es_hoy): ?>
             <div class="aviso-otro-dia"><i class="fas fa-exclamation-triangle"></i><span><strong>Atención:</strong> estás cargando importes del día <strong><?php echo date('d/m/Y', strtotime($fecha)); ?></strong>, no de hoy.</span></div>
@@ -669,7 +752,7 @@ $yaCargado = ($reca !== null);
             <input type="hidden" name="chofer_id" value="<?php echo htmlspecialchars($chofer_id); ?>">
             <input type="hidden" name="vehiculo_id" value="<?php echo htmlspecialchars($vehiculo_id); ?>">
             <input type="hidden" name="fecha" value="<?php echo htmlspecialchars($fecha); ?>">
-
+            <input type="hidden" name="sin_auto" value="<?php echo $sin_auto ? '1' : '0'; ?>">
             <input type="hidden" name="modo_edicion" id="modo_edicion" value="0">
 
             <?php if ($es_nueva_pestana): ?>
@@ -701,11 +784,20 @@ $yaCargado = ($reca !== null);
                 <div class="card">
                     <h6><i class="fas fa-taxi"></i> Vehículo</h6>
                     <div class="datos-lista">
-                        <div class="fila"><span class="etiqueta">Móvil:</span><span class="valor">#<?php echo htmlspecialchars($movil); ?></span></div>
-                        <div class="fila"><span class="etiqueta">Marca:</span><span class="valor"><?php echo htmlspecialchars($marca); ?></span></div>
-                        <div class="fila"><span class="etiqueta">Modelo:</span><span class="valor"><?php echo htmlspecialchars($modelo); ?></span></div>
-                        <div class="fila"><span class="etiqueta">Dominio:</span><span class="valor"><?php echo htmlspecialchars($dominio); ?></span></div>
-                        <div class="fila"><span class="etiqueta">Turno:</span><span class="valor"><?php echo htmlspecialchars($turno); ?></span></div>
+                        <?php if ($sin_auto): ?>
+                            <div class="fila" style="color:#6c757d; justify-content:center; padding: 20px 0;">
+                                <span style="text-align:center; font-weight:600;">
+                                    <i class="fas fa-car-crash" style="font-size: 1.5rem; display:block; margin-bottom:6px;"></i>
+                                    Sin auto asignado
+                                </span>
+                            </div>
+                        <?php else: ?>
+                            <div class="fila"><span class="etiqueta">Móvil:</span><span class="valor">#<?php echo htmlspecialchars($movil); ?></span></div>
+                            <div class="fila"><span class="etiqueta">Marca:</span><span class="valor"><?php echo htmlspecialchars($marca); ?></span></div>
+                            <div class="fila"><span class="etiqueta">Modelo:</span><span class="valor"><?php echo htmlspecialchars($modelo); ?></span></div>
+                            <div class="fila"><span class="etiqueta">Dominio:</span><span class="valor"><?php echo htmlspecialchars($dominio); ?></span></div>
+                            <div class="fila"><span class="etiqueta">Turno:</span><span class="valor"><?php echo htmlspecialchars($turno); ?></span></div>
+                        <?php endif; ?>
                         <?php if ($saldo_deudor > 0): ?>
                             <div class="fila" style="color:#dc3545; font-weight:600;">
                                 <span class="etiqueta">Deuda previa:</span>
@@ -724,13 +816,11 @@ $yaCargado = ($reca !== null);
                 <div class="card">
                     <h6><i class="fas fa-money-bill-wave"></i> Importes del Día</h6>
                     <div class="importes-grid">
-                        <!-- ABONO DIARIO -->
                         <div class="campo campo-abono">
                             <label><i class="fas fa-file-invoice-dollar"></i> Abono diario (lo que debe pagar hoy)</label>
                             <input type="number" id="abono_diario" name="abono_diario" step="0.01" value="<?php echo ($abono_diario_actual > 0) ? $abono_diario_actual : '' ?>" placeholder="0.00">
                         </div>
 
-                        <!-- PANEL YA CARGADO -->
                         <?php if ($yaCargado): ?>
                             <div class="ya-cargado-panel" id="panel-ya-cargado">
                                 <div class="titulo">
@@ -742,11 +832,16 @@ $yaCargado = ($reca !== null);
                                     <div class="ya-cargado-fila"><span class="etiqueta">Voucher:</span><span class="valor">$<?php echo number_format($voucher_actual, 0, ',', '.'); ?></span></div>
                                     <div class="ya-cargado-fila"><span class="etiqueta">MP:</span><span class="valor">$<?php echo number_format($mp_actual, 0, ',', '.'); ?></span></div>
                                     <div class="ya-cargado-fila"><span class="etiqueta">FT:</span><span class="valor">$<?php echo number_format($ft_actual, 0, ',', '.'); ?></span></div>
+                                    <?php if (trim($observaciones_actual) !== ''): ?>
+                                        <div class="ya-cargado-fila" style="grid-column: 1 / -1;">
+                                            <span class="etiqueta">Observaciones:</span>
+                                            <span class="valor" style="font-weight: 500;"><?php echo htmlspecialchars(htmlspecialchars_decode($observaciones_actual, ENT_QUOTES), ENT_QUOTES, 'UTF-8'); ?></span>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         <?php endif; ?>
 
-                        <!-- NUEVOS MOVIMIENTOS -->
                         <div class="campo">
                             <label id="lbl-voucher">Nuevo Voucher</label>
                             <input type="number" id="voucher" name="voucher_nuevo" step="0.01" value="" placeholder="0.00">
@@ -765,7 +860,6 @@ $yaCargado = ($reca !== null);
                             <input type="number" id="ft" name="ft_nuevo" step="0.01" value="" placeholder="0.00">
                         </div>
 
-                        <!-- READONLY -->
                         <div class="campo">
                             <label>Comisión (10%)</label>
                             <input type="number" id="comi" step="0.01" readonly value="<?php echo $comision_actual ?>">
@@ -775,21 +869,54 @@ $yaCargado = ($reca !== null);
                             <input type="number" id="tot_vou" step="0.01" readonly value="<?php echo $total_actual ?>">
                         </div>
 
-                        <!-- RESULTADO FINAL -->
                         <div class="campo resultado-final">
                             <label style="font-size:0.85rem; font-weight:600; text-align:center;">Deuda / A favor del día</label>
                             <input type="number" id="faltante" step="0.01" readonly value="<?php echo $debe_actual ?>">
                             <div class="ayuda"><span style="color:#dc3545;">Rojo = debe</span> · <span style="color:#28a745;">Verde = a favor</span> · Negro = al día</div>
                         </div>
 
-                        <!-- OBSERVACIONES -->
                         <div class="campo" style="grid-column: 1 / -1; margin-top: 5px;">
                             <label><i class="fas fa-comment-dots"></i> Observaciones del día</label>
-                            <textarea name="observaciones" rows="2" placeholder="Escribí alguna nota o detalle del día..." style="resize: none;"><?php echo htmlspecialchars($observaciones_actual); ?></textarea>
+                            <textarea name="observaciones" rows="2" placeholder="Escribí alguna nota o detalle del día..." style="resize: none;"><?php echo htmlspecialchars(htmlspecialchars_decode($observaciones_actual ?? '', ENT_QUOTES), ENT_QUOTES, 'UTF-8'); ?></textarea>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <?php if ($caja_tabla_existe): ?>
+                <div class="card" style="margin-top: 10px;">
+                    <h6><i class="fas fa-cash-register"></i> Movimientos de Caja del Día (<?php echo date('d/m/Y', strtotime($fecha)); ?>)</h6>
+                    <?php if (empty($movs_caja_dia)): ?>
+                        <div style="text-align: center; color: #999; padding: 12px; font-size: 0.82rem;">
+                            Sin movimientos registrados para este día.
+                            <a href="caja_movimientos.php?fecha=<?php echo $fecha; ?>" target="_blank" style="color: #667eea; font-weight: 600; margin-left: 5px;">Agregar movimiento →</a>
+                        </div>
+                    <?php else: ?>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 6px;">
+                            <?php foreach ($movs_caja_dia as $m): ?>
+                                <div style="padding: 6px 10px; border-radius: 6px; background: <?php echo $m['tipo'] === 'INGRESO' ? '#d4edda' : '#f8d7da'; ?>; border-left: 3px solid <?php echo $m['tipo'] === 'INGRESO' ? '#28a745' : '#dc3545'; ?>;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                        <span style="font-weight: 700;">
+                                            <i class="fas <?php echo $m['tipo'] === 'INGRESO' ? 'fa-arrow-down' : 'fa-arrow-up'; ?>"></i>
+                                            <?php echo $m['tipo']; ?> <?php echo $m['medio']; ?>
+                                        </span>
+                                        <span style="font-weight: 700;">$<?php echo number_format($m['monto'], 0, ',', '.'); ?></span>
+                                    </div>
+                                    <?php if ($m['descripcion']): ?>
+                                        <div style="font-size: 0.72rem; color: #666; margin-top: 2px;"><?php echo htmlspecialchars($m['descripcion']); ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid #eef1f7; font-size: 0.82rem;">
+                            <strong>Neto del día:</strong>
+                            <span style="margin-left: 15px;">MP: <span style="color: <?php echo $tot_caja_mp >= 0 ? '#28a745' : '#dc3545'; ?>; font-weight: 700;"><?php echo $tot_caja_mp >= 0 ? '+' : ''; ?>$<?php echo number_format($tot_caja_mp, 0, ',', '.'); ?></span></span>
+                            <span style="margin-left: 20px;">FT: <span style="color: <?php echo $tot_caja_ft >= 0 ? '#28a745' : '#dc3545'; ?>; font-weight: 700;"><?php echo $tot_caja_ft >= 0 ? '+' : ''; ?>$<?php echo number_format($tot_caja_ft, 0, ',', '.'); ?></span></span>
+                            <a href="caja_movimientos.php?fecha=<?php echo $fecha; ?>" target="_blank" style="float: right; color: #667eea; font-weight: 600; font-size: 0.78rem;">Ver todos →</a>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
 
             <div class="acciones">
                 <a href="cargar_selector.php?fecha=<?php echo urlencode($fecha); ?><?php echo $param_nueva; ?>" class="btn-volver"><i class="fas fa-arrow-left"></i> Volver</a>
@@ -848,30 +975,32 @@ $yaCargado = ($reca !== null);
 
             document.getElementById('modo_edicion').value = '1';
 
-            // Precargar SOLO los campos que estaban vacíos con los valores anteriores.
-            // ⚠️ NO tocar abono_diario: ya viene cargado desde PHP y el usuario pudo haberlo cambiado.
             document.getElementById('voucher').value = VOUCHER_PREV;
             document.getElementById('mp').value = MP_PREV;
             document.getElementById('ft').value = FT_PREV;
 
-            // Ocultar el panel de "Ya cargado"
             document.getElementById('panel-ya-cargado').style.display = 'none';
 
-            // Cambiar los labels
             document.getElementById('lbl-voucher').innerText = "Editar Voucher Total";
             document.getElementById('lbl-mp').innerText = "Editar MP Total";
             document.getElementById('lbl-ft').innerText = "Editar FT Total";
 
-            // Resaltar los inputs
             ['voucher', 'mp', 'ft'].forEach(id => {
                 document.getElementById(id).style.border = '2px solid #ffc107';
                 document.getElementById(id).style.backgroundColor = '#fff3cd';
             });
 
-            // Resaltar también el abono (porque ahora se puede editar como parte del modo edición)
             const abonoInput = document.getElementById('abono_diario');
             abonoInput.style.border = '2px solid #ffc107';
             abonoInput.style.backgroundColor = '#fff3cd';
+
+            const obsInput = document.querySelector('textarea[name="observaciones"]');
+            if (obsInput) {
+                obsInput.style.border = '2px solid #ffc107';
+                obsInput.style.backgroundColor = '#fff3cd';
+                obsInput.focus();
+                obsInput.setSelectionRange(obsInput.value.length, obsInput.value.length);
+            }
 
             calcular();
         }

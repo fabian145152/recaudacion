@@ -865,6 +865,14 @@ $con->close();
                                     <div class="estado-badge estado-aldia"><i class="fas fa-check"></i><span>Al día</span></div>
                                 <?php endif; ?>
                             </div>
+
+                            <?php if (!$tieneAuto): ?>
+                                <div style="margin-top: 6px; padding: 6px 10px; background: #f0f4ff; border-radius: 6px; font-size: 0.72rem; color: #4a5aa8; text-align: center; font-weight: 600;">
+                                    <i class="fas fa-arrow-right"></i> Sin auto — tocá para cargar pago/deuda
+                                </div>
+                            <?php endif; ?>
+
+
                         </a>
 
                         <?php if ($tiene_prestamo): ?>
