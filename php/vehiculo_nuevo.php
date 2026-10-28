@@ -35,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($stmt->execute()) {
         $stmt->close();
-        // ✅ Redirigir con parámetro de éxito (NO usar alert)
         header("Location: vehiculo_lista.php?ok=creado&movil=" . urlencode($movil));
         exit;
     } else {
@@ -376,6 +375,7 @@ if (isset($_GET['msg'])) {
                             <select id="tipo" name="tipo" class="form-control">
                                 <option value="TAXI">TAXI</option>
                                 <option value="REMIS">REMIS</option>
+                                <option value="ALQUILER">AUTO DE ALQUILER</option>
                             </select>
                         </div>
                     </div>
@@ -450,7 +450,10 @@ if (isset($_GET['msg'])) {
             document.getElementById('conf_marca').textContent = document.getElementById('marca').value.toUpperCase();
             document.getElementById('conf_modelo').textContent = document.getElementById('modelo').value.toUpperCase();
             document.getElementById('conf_dominio').textContent = document.getElementById('dominio').value.toUpperCase();
-            document.getElementById('conf_tipo').textContent = document.getElementById('tipo').value;
+
+            // Mostrar el texto amigable si es ALQUILER
+            const tipoVal = document.getElementById('tipo').value;
+            document.getElementById('conf_tipo').textContent = (tipoVal === 'ALQUILER') ? 'AUTO DE ALQUILER' : tipoVal;
 
             document.getElementById('modalConfirmacion').classList.add('show');
             return false;

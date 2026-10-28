@@ -245,6 +245,7 @@ $stmt->close();
                             <select name="tipo" class="form-control">
                                 <option value="TAXI" <?php echo ($vehiculo['tipo'] === 'TAXI') ? 'selected' : ''; ?>>TAXI</option>
                                 <option value="REMIS" <?php echo ($vehiculo['tipo'] === 'REMIS') ? 'selected' : ''; ?>>REMIS</option>
+                                <option value="ALQUILER" <?php echo ($vehiculo['tipo'] === 'ALQUILER') ? 'selected' : ''; ?>>AUTO DE ALQUILER</option>
                             </select>
                         </div>
                     </div>

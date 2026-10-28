@@ -270,7 +270,7 @@ $mi_id = (int)$_SESSION['id_usuario'];
                                 <td><?php echo date('d/m/Y', strtotime($u['creado'])); ?></td>
                                 <td>
                                     <div class="acciones">
-                                        <a href="usuario_editar.php?id=<?php echo (int)$u['id']; ?>" class="btn btn-warning btn-sm" title="Editar"><i class="fas fa-pen"></i> Editar</a>
+                                        <a href="cambiar_password.php?id=<?php echo (int)$u['id']; ?>" class="btn btn-warning btn-sm" title="Cambiar Contraseña"><i class="fas fa-key"></i> Clave</a>
 
                                         <?php if (!$es_yo): ?>
                                             <form method="POST" action="usuario_eliminar.php" class="inline"

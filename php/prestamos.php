@@ -3,6 +3,19 @@ include_once "../funciones/funciones.php";
 $con = conexion();
 $con->set_charset("utf8mb4");
 
+// === AUTO-MIGRACIÓN: asegurar columnas de auditoría ===
+$check = $con->query("SHOW COLUMNS FROM prestamos LIKE 'registrado_por'");
+if ($check && $check->num_rows === 0) {
+    $con->query("ALTER TABLE prestamos ADD COLUMN registrado_por VARCHAR(100) DEFAULT NULL");
+    $con->query("ALTER TABLE prestamos ADD COLUMN registrado_fecha DATETIME DEFAULT NULL");
+}
+$check2 = $con->query("SHOW COLUMNS FROM prestamos_pagos LIKE 'registrado_por'");
+if ($check2 && $check2->num_rows === 0) {
+    $con->query("ALTER TABLE prestamos_pagos ADD COLUMN registrado_por VARCHAR(100) DEFAULT NULL");
+    $con->query("ALTER TABLE prestamos_pagos ADD COLUMN editado_por VARCHAR(100) DEFAULT NULL");
+    $con->query("ALTER TABLE prestamos_pagos ADD COLUMN editado_fecha DATETIME DEFAULT NULL");
+}
+
 if (isset($_GET['mora']) && isset($_GET['id'])) {
     $id_mora = (int)$_GET['id'];
     $con->query("UPDATE prestamos SET estado_mora = 'EN MORA' WHERE id = $id_mora");
@@ -307,6 +320,29 @@ if (!$ver_historial) {
             margin-top: 3px;
         }
 
+        /* Info de auditoría del préstamo */
+        .prestamo-auditoria {
+            font-size: 0.68rem;
+            color: #888;
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px dashed #eef1f7;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .prestamo-auditoria i {
+            color: #667eea;
+            font-size: 0.7rem;
+        }
+
+        .prestamo-auditoria strong {
+            color: #555;
+            font-weight: 700;
+        }
+
         .prestamo-monto {
             text-align: right;
             min-width: 110px;
@@ -478,8 +514,9 @@ if (!$ver_historial) {
         .pago-fila {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             font-size: 0.8rem;
-            padding: 4px 8px;
+            padding: 5px 8px;
             background: #f8f9fc;
             border-radius: 4px;
             margin-bottom: 4px;
@@ -494,6 +531,48 @@ if (!$ver_historial) {
         .pago-fila .monto-pago {
             font-weight: 700;
             color: #28a745;
+        }
+
+        /* Info del chofer que registró el pago */
+        .pago-registrado-por {
+            font-size: 0.68rem;
+            color: #888;
+            margin-left: 8px;
+        }
+
+        .pago-registrado-por i {
+            font-size: 0.65rem;
+            color: #6c757d;
+        }
+
+        .badge-editado {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: #fff3cd;
+            color: #856404;
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            margin-left: 5px;
+            cursor: help;
+        }
+
+        .btn-editar-pago {
+            background: transparent;
+            border: none;
+            color: #ffc107;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+        }
+
+        .btn-editar-pago:hover {
+            background: #ffc107;
+            color: white;
         }
 
         .empty-state {
@@ -530,6 +609,11 @@ if (!$ver_historial) {
         <?php if (isset($_GET['msg']) && $_GET['msg'] === 'pagado'): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert" style="border-left: 4px solid #28a745; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
                 <i class="fas fa-check-circle"></i> <b>¡Pago registrado con éxito!</b>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php elseif (isset($_GET['msg']) && $_GET['msg'] === 'editado'): ?>
+            <div class="alert alert-warning alert-dismissible fade show" role="alert" style="border-left: 4px solid #ffc107; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+                <i class="fas fa-edit"></i> <b>¡El pago fue editado con éxito y el saldo del préstamo fue recalculado!</b>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
@@ -580,7 +664,6 @@ if (!$ver_historial) {
 
                     $cuotas_pagadas_equiv = ($p['valor_cuota'] > 0) ? round($total_pagado / $p['valor_cuota'], 1) : 0;
 
-                    // Calculamos el monto por defecto que se le va a mostrar en el input del modal
                     $monto_a_cobrar = ($saldo_restante < floatval($p['valor_cuota'])) ? $saldo_restante : floatval($p['valor_cuota']);
                 ?>
                     <div class="prestamo-card <?php echo $clase_estado; ?>">
@@ -617,6 +700,17 @@ if (!$ver_historial) {
                                     Pagado: $<?php echo number_format($total_pagado, 0, ',', '.'); ?>
                                     (<?php echo $cuotas_pagadas_equiv; ?> de <?php echo $p['cuotas']; ?> cuotas aprox.)
                                 </div>
+
+                                <!-- AUDITORÍA DEL PRÉSTAMO -->
+                                <div class="prestamo-auditoria">
+                                    <i class="fas fa-user-check"></i>
+                                    Cargado por <strong><?php echo htmlspecialchars($p['registrado_por'] ?: '—'); ?></strong>
+                                    <?php if (!empty($p['registrado_fecha'])): ?>
+                                        · <?php echo date('d/m/Y H:i', strtotime($p['registrado_fecha'])); ?>
+                                    <?php elseif (!empty($p['creado'])): ?>
+                                        · <?php echo date('d/m/Y', strtotime($p['creado'])); ?>
+                                    <?php endif; ?>
+                                </div>
                             </div>
 
                             <div class="prestamo-monto">
@@ -631,7 +725,6 @@ if (!$ver_historial) {
 
                             <div class="acciones-botones">
                                 <?php if ($p['estado'] === 'ACTIVO'): ?>
-                                    <!-- BOTÓN MODIFICADO: Ahora abre el modal -->
                                     <button type="button" class="btn-accion btn-pagar" onclick="abrirModalPago(<?php echo $p['id']; ?>, <?php echo $saldo_restante; ?>, '<?php echo addslashes(htmlspecialchars($p['chofer_nombre'])); ?>', <?php echo $monto_a_cobrar; ?>)">
                                         <i class="fas fa-check"></i> Pagar
                                     </button>
@@ -650,7 +743,7 @@ if (!$ver_historial) {
                         <div class="pagos-lista" id="pagos-<?php echo $p['id']; ?>">
                             <div style="font-size:0.75rem; font-weight:700; color:#888; text-transform:uppercase; margin-bottom:5px;">Historial de pagos:</div>
                             <?php
-                            $stmt_p = $con->prepare("SELECT monto, fecha_pago FROM prestamos_pagos WHERE prestamo_id = ? ORDER BY fecha_pago ASC");
+                            $stmt_p = $con->prepare("SELECT id, monto, fecha_pago, registrado_por, editado_por, editado_fecha FROM prestamos_pagos WHERE prestamo_id = ? ORDER BY fecha_pago ASC");
                             $stmt_p->bind_param("i", $p['id']);
                             $stmt_p->execute();
                             $res_p = $stmt_p->get_result();
@@ -659,8 +752,26 @@ if (!$ver_historial) {
                                 while ($pago = $res_p->fetch_assoc()):
                             ?>
                                     <div class="pago-fila">
-                                        <span><i class="far fa-calendar-alt"></i> <span class="fecha-pago"><?php echo date('d/m/Y', strtotime($pago['fecha_pago'])); ?></span></span>
-                                        <span class="monto-pago">+ $<?php echo number_format($pago['monto'], 2, ',', '.'); ?></span>
+                                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+                                            <i class="far fa-calendar-alt"></i>
+                                            <span class="fecha-pago"><?php echo date('d/m/Y', strtotime($pago['fecha_pago'])); ?></span>
+                                            <?php if (!empty($pago['registrado_por'])): ?>
+                                                <span class="pago-registrado-por">
+                                                    <i class="fas fa-user"></i> por <strong><?php echo htmlspecialchars($pago['registrado_por']); ?></strong>
+                                                </span>
+                                            <?php endif; ?>
+                                            <?php if (!empty($pago['editado_por'])): ?>
+                                                <span class="badge-editado" title="Editado por <?php echo htmlspecialchars($pago['editado_por']); ?> el <?php echo date('d/m/Y H:i', strtotime($pago['editado_fecha'])); ?>">
+                                                    <i class="fas fa-pen"></i> Editado
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span class="monto-pago">+ $<?php echo number_format($pago['monto'], 2, ',', '.'); ?></span>
+                                            <button type="button" class="btn-editar-pago" onclick="abrirModalEditarPago(<?php echo $pago['id']; ?>, <?php echo $pago['monto']; ?>, <?php echo $p['id']; ?>)" title="Editar este pago">
+                                                <i class="fas fa-pen"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 <?php
                                 endwhile;
@@ -704,6 +815,30 @@ if (!$ver_historial) {
         </div>
     </div>
 
+    <!-- MODAL PARA EDITAR UN PAGO -->
+    <div class="modal fade" id="modalEditarPago" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 12px;">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-pen"></i> Editar Pago</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-pago-id">
+                    <input type="hidden" id="edit-prestamo-id">
+
+                    <label class="form-label fw-bold">Nuevo Monto del Pago ($)</label>
+                    <input type="number" id="edit-pago-monto" class="form-control form-control-lg text-end" step="0.01" min="0.01">
+                    <small class="text-muted">Al cambiar el monto, el saldo restante del préstamo se recalculará automáticamente.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="procesarEdicionPago()">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- LIBRERÍA BOOTSTRAP JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -717,7 +852,6 @@ if (!$ver_historial) {
             }
         }
 
-        // === LÓGICA PARA REGISTRAR PAGO MANUAL ===
         let pagoPrestamoId = 0;
         let pagoSaldoMax = 0;
 
@@ -731,7 +865,7 @@ if (!$ver_historial) {
             });
 
             const input = document.getElementById('pago-monto');
-            input.value = parseFloat(monto_sugerido).toFixed(2); // Precarga con la cuota o el saldo
+            input.value = parseFloat(monto_sugerido).toFixed(2);
             input.max = pagoSaldoMax;
             input.min = 0.01;
 
@@ -751,7 +885,6 @@ if (!$ver_historial) {
                 return;
             }
 
-            // Enviamos el pago al archivo PHP
             const fd = new FormData();
             fd.append('prestamo_id', pagoPrestamoId);
             fd.append('monto_pago', monto);
@@ -770,6 +903,47 @@ if (!$ver_historial) {
                 })
                 .catch(() => {
                     alert('❌ Error de conexión al procesar el pago.');
+                });
+        }
+
+        function abrirModalEditarPago(pago_id, monto_actual, prestamo_id) {
+            document.getElementById('edit-pago-id').value = pago_id;
+            document.getElementById('edit-prestamo-id').value = prestamo_id;
+            document.getElementById('edit-pago-monto').value = parseFloat(monto_actual).toFixed(2);
+
+            var myModal = new bootstrap.Modal(document.getElementById('modalEditarPago'));
+            myModal.show();
+        }
+
+        function procesarEdicionPago() {
+            const pago_id = document.getElementById('edit-pago-id').value;
+            const prestamo_id = document.getElementById('edit-prestamo-id').value;
+            const nuevo_monto = parseFloat(document.getElementById('edit-pago-monto').value);
+
+            if (isNaN(nuevo_monto) || nuevo_monto <= 0) {
+                alert('Por favor, ingresá un monto válido mayor a 0.');
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('pago_id', pago_id);
+            fd.append('prestamo_id', prestamo_id);
+            fd.append('nuevo_monto', nuevo_monto);
+
+            fetch('prestamo_pago_editar.php', {
+                    method: 'POST',
+                    body: fd
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.ok) {
+                        window.location.href = 'prestamos.php?msg=editado';
+                    } else {
+                        alert('❌ Error: ' + data.error);
+                    }
+                })
+                .catch(() => {
+                    alert('❌ Error de conexión al procesar la edición.');
                 });
         }
     </script>

@@ -443,6 +443,144 @@ $es_ayer = ($fecha_filtro === date('Y-m-d', strtotime('-1 day')));
             font-size: 0.8rem;
         }
 
+        /* =========================================
+           MODAL SELECCIÓN TIPO VEHÍCULO
+           ========================================= */
+        .modal-tipo-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .modal-tipo-overlay.active {
+            display: flex;
+        }
+
+        .modal-tipo-box {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 850px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: modalTipoIn 0.3s ease;
+        }
+
+        @keyframes modalTipoIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-tipo-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-tipo-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-tipo-close {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .modal-tipo-close:hover {
+            opacity: 1;
+        }
+
+        .modal-tipo-body {
+            padding: 30px;
+        }
+
+        .tipo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .tipo-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 35px 20px;
+            border-radius: 14px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .tipo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            color: white;
+        }
+
+        .tipo-card i {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+        }
+
+        .tipo-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .tipo-card p {
+            margin: 0;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .tipo-taxi {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+        }
+
+        .tipo-remis {
+            background: linear-gradient(135deg, #17a2b8, #0dcaf0);
+        }
+
+        .tipo-alquiler {
+            background: linear-gradient(135deg, #6f42c1, #6610f2);
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 1.3rem;
@@ -634,11 +772,14 @@ $es_ayer = ($fecha_filtro === date('Y-m-d', strtotime('-1 day')));
                 <h3>Choferes y Asignaciones</h3>
                 <p>Ver choferes, sus móviles y cambiar autos</p>
             </a>
-            <a href="javascript:void(0)" onclick="abrirEnNuevaPestana('php/cargar_selector.php', event)" class="menu-card">
+
+            <!-- MODIFICADO: Abre el modal de selección de tipo -->
+            <a href="javascript:void(0)" onclick="abrirModalTipo(event)" class="menu-card">
                 <div class="icon icon-recauda"><i class="fas fa-dollar-sign"></i></div>
                 <h3>Cargar Recaudación</h3>
                 <p>Cargar los importes del día de un chofer</p>
             </a>
+
             <a href="javascript:void(0)" onclick="abrirEnNuevaPestana('php/prestamos.php', event)" class="menu-card">
                 <div class="icon icon-prestamos"><i class="fas fa-file-invoice-dollar"></i></div>
                 <h3>Préstamos y Deudas</h3>
@@ -677,6 +818,35 @@ $es_ayer = ($fecha_filtro === date('Y-m-d', strtotime('-1 day')));
         </div>
 
         <div class="footer">Sistema de Gestión de Taxis &copy; <?php echo date('Y'); ?></div>
+    </div>
+
+    <!-- MODAL SELECCION TIPO VEHICULO -->
+    <div class="modal-tipo-overlay" id="modalTipoVehiculo">
+        <div class="modal-tipo-box">
+            <div class="modal-tipo-header">
+                <h3><i class="fas fa-car"></i> ¿Qué tipo de vehículo vas a recaudar?</h3>
+                <button class="modal-tipo-close" onclick="cerrarModalTipo()">&times;</button>
+            </div>
+            <div class="modal-tipo-body">
+                <div class="tipo-grid">
+                    <a href="javascript:void(0)" onclick="abrirTipo('TAXI')" class="tipo-card tipo-taxi">
+                        <i class="fas fa-taxi"></i>
+                        <h4>TAXI</h4>
+                        <p>Cargar recaudación de taxis</p>
+                    </a>
+                    <a href="javascript:void(0)" onclick="abrirTipo('REMIS')" class="tipo-card tipo-remis">
+                        <i class="fas fa-car"></i>
+                        <h4>REMIS</h4>
+                        <p>Cargar recaudación de remises</p>
+                    </a>
+                    <a href="javascript:void(0)" onclick="abrirTipo('ALQUILER')" class="tipo-card tipo-alquiler">
+                        <i class="fas fa-car-side"></i>
+                        <h4>AUTO DE ALQUILER</h4>
+                        <p>Cargar recaudación de autos de alquiler</p>
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -734,6 +904,24 @@ $es_ayer = ($fecha_filtro === date('Y-m-d', strtotime('-1 day')));
             const separador = url.includes('?') ? '&' : '?';
             window.open(url + separador + 'nueva=1', '_blank');
         }
+
+        // === LÓGICA DEL MODAL TIPO VEHÍCULO ===
+        function abrirModalTipo(event) {
+            if (event) event.preventDefault();
+            document.getElementById('modalTipoVehiculo').classList.add('active');
+        }
+
+        function cerrarModalTipo() {
+            document.getElementById('modalTipoVehiculo').classList.remove('active');
+        }
+
+        function abrirTipo(tipo) {
+            window.open('php/cargar_selector.php?tipo=' + tipo + '&nueva=1', '_blank');
+        }
+
+        document.getElementById('modalTipoVehiculo').addEventListener('click', function(e) {
+            if (e.target === this) cerrarModalTipo();
+        });
     </script>
 </body>
 

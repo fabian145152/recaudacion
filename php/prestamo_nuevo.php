@@ -1,7 +1,22 @@
 <?php
+require_once __DIR__ . '/../funciones/auth.php';
+requireLogin();
 include_once "../funciones/funciones.php";
 $con = conexion();
 $con->set_charset("utf8mb4");
+
+// === AUTO-MIGRACIÓN: asegurar columnas de auditoría ===
+$check = $con->query("SHOW COLUMNS FROM prestamos LIKE 'registrado_por'");
+if ($check && $check->num_rows === 0) {
+    $con->query("ALTER TABLE prestamos ADD COLUMN registrado_por VARCHAR(100) DEFAULT NULL");
+    $con->query("ALTER TABLE prestamos ADD COLUMN registrado_fecha DATETIME DEFAULT NULL");
+}
+$check2 = $con->query("SHOW COLUMNS FROM prestamos_pagos LIKE 'registrado_por'");
+if ($check2 && $check2->num_rows === 0) {
+    $con->query("ALTER TABLE prestamos_pagos ADD COLUMN registrado_por VARCHAR(100) DEFAULT NULL");
+    $con->query("ALTER TABLE prestamos_pagos ADD COLUMN editado_por VARCHAR(100) DEFAULT NULL");
+    $con->query("ALTER TABLE prestamos_pagos ADD COLUMN editado_fecha DATETIME DEFAULT NULL");
+}
 
 $choferes = $con->query("SELECT id, nombre FROM choferes WHERE activo = 1 ORDER BY nombre ASC")->fetch_all(MYSQLI_ASSOC);
 
@@ -13,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cuotas = (int)$_POST['cuotas'];
     $fecha = $_POST['fecha'];
     $descripcion = trim($_POST['descripcion']);
-    $observaciones = trim($_POST['observaciones']); // NUEVO
+    $observaciones = trim($_POST['observaciones']);
 
     $calculo_auto = isset($_POST['calculo_auto']) ? true : false;
 
@@ -27,15 +42,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($chofer_id > 0 && $monto > 0 && $cuotas > 0 && !empty($fecha) && $valor_cuota > 0) {
-        // Agregamos 'observaciones' al INSERT
-        $stmt = $con->prepare("INSERT INTO prestamos (chofer_id, monto, interes, monto_total, cuotas, valor_cuota, fecha, descripcion, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("idididsss", $chofer_id, $monto, $interes, $monto_total, $cuotas, $valor_cuota, $fecha, $descripcion, $observaciones);
+        // === QUIÉN Y CUÁNDO ===
+        $usuario_nombre = $_SESSION['nombre'] ?? ($_SESSION['usuario'] ?? 'Desconocido');
+        $ahora = date('Y-m-d H:i:s');
+
+        $stmt = $con->prepare("INSERT INTO prestamos (chofer_id, monto, interes, monto_total, cuotas, valor_cuota, fecha, descripcion, observaciones, registrado_por, registrado_fecha) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("idddidsssss", $chofer_id, $monto, $interes, $monto_total, $cuotas, $valor_cuota, $fecha, $descripcion, $observaciones, $usuario_nombre, $ahora);
 
         if ($stmt->execute()) {
             echo "<script>window.location='prestamos.php';</script>";
             exit;
         } else {
-            $mensaje = "<div class='alert alert-danger'>Error al guardar el préstamo.</div>";
+            $mensaje = "<div class='alert alert-danger'>Error al guardar el préstamo: " . htmlspecialchars($stmt->error) . "</div>";
         }
     } else {
         $mensaje = "<div class='alert alert-warning'>Completá todos los campos obligatorios.</div>";
@@ -266,7 +284,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="text" name="descripcion" class="form-control" placeholder="Ej: Arreglo de motor...">
                 </div>
 
-                <!-- NUEVO CAMPO OBSERVACIONES -->
                 <div class="mb-4">
                     <label class="form-label">Observaciones internas (opcional)</label>
                     <textarea name="observaciones" class="form-control" rows="2" placeholder="Notas internas sobre el préstamo..."></textarea>

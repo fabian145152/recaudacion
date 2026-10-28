@@ -7,6 +7,28 @@ $con->set_charset("utf8mb4");
 $es_nueva_pestana = isset($_GET['nueva']) && $_GET['nueva'] == '1';
 $param_nueva = $es_nueva_pestana ? '&nueva=1' : '';
 
+// === FILTRO DE TIPO DE VEHÍCULO (con respaldo en sesión) ===
+$tipo_filtro = $_GET['tipo'] ?? '';
+$tipos_validos = ['TAXI', 'REMIS', 'ALQUILER'];
+
+// Caso 1: piden quitar el filtro explícitamente
+if ($tipo_filtro === 'todos') {
+    unset($_SESSION['tipo_filtro_actual']);
+    $tipo_filtro = '';
+}
+// Caso 2: vino un tipo válido por URL → lo guardamos en sesión
+elseif (in_array($tipo_filtro, $tipos_validos)) {
+    $_SESSION['tipo_filtro_actual'] = $tipo_filtro;
+}
+// Caso 3: no vino por URL pero hay uno guardado → lo usamos
+elseif (isset($_SESSION['tipo_filtro_actual']) && in_array($_SESSION['tipo_filtro_actual'], $tipos_validos)) {
+    $tipo_filtro = $_SESSION['tipo_filtro_actual'];
+}
+// Caso 4: no hay nada
+else {
+    $tipo_filtro = '';
+}
+
 // === FILTRO DE FECHA ===
 $fecha_filtro = $_GET['fecha'] ?? date('Y-m-d');
 
@@ -30,7 +52,46 @@ if ($es_hoy) {
     $aviso_sin = "Sin recaudación cargada el $fecha_mostrar";
 }
 
-// === CHOFERES ===
+// === LÓGICA DE MANTENIMIENTO CORREGIDA ===
+define('INTERVALO_ACEITE', 13000);
+define('INTERVALO_BUJIAS', 40000);
+define('INTERVALO_GRASA',  60000);
+define('INTERVALO_CORREA', 50000);
+
+function calcMant($km_actuales, $km_guardados, $km_ultimo, $intervalo, $nombre)
+{
+    if ($km_actuales <= 0) return ['class' => 'badge-sin', 'short' => '—', 'tooltip' => 'Sin km actuales'];
+
+    // EL CÁLCULO SE HACE SIEMPRE DESDE KM_GUARDADOS
+    $base = (int)$km_guardados;
+
+    if ($base <= 0) return ['class' => 'badge-sin', 'short' => '—', 'tooltip' => 'Sin km base guardados'];
+
+    $proximo = $base + $intervalo;
+    $diff = $km_actuales - $proximo;
+
+    if ($diff >= 0) {
+        return [
+            'class' => 'badge-vencido',
+            'short' => '-' . number_format($diff, 0, ',', '.') . ' km',
+            'tooltip' => $nombre . ' vencido hace ' . number_format($diff, 0, ',', '.') . ' km (Base: ' . number_format($base, 0, ',', '.') . ' km)'
+        ];
+    }
+
+    $faltantes = abs($diff);
+    return [
+        'class' => ($faltantes <= 1000) ? 'badge-proximo' : 'badge-ok',
+        'short' => number_format($faltantes, 0, ',', '.') . ' km',
+        'tooltip' => 'Faltan ' . number_format($faltantes, 0, ',', '.') . ' km para ' . $nombre . ' (Base: ' . number_format($base, 0, ',', '.') . ' km)'
+    ];
+}
+
+// === CONSULTA SQL CON FILTRO DE TIPO ===
+$where_tipo = "";
+if ($tipo_filtro !== '') {
+    $where_tipo = " AND v.tipo = ? ";
+}
+
 $sql = "
     SELECT 
         c.id,
@@ -42,6 +103,12 @@ $sql = "
         v.marca,
         v.modelo,
         v.dominio,
+        v.km_actuales,
+        v.km_guardados,
+        v.km_aceite,
+        v.km_bujias,
+        v.km_grasa,
+        v.km_correa,
         COALESCE((
             SELECT SUM(monto) FROM cuenta_corriente 
             WHERE chofer_id = c.id AND fecha <= ? 
@@ -61,12 +128,16 @@ $sql = "
     LEFT JOIN asignaciones_auto a ON a.chofer_id = c.id AND a.activa = 1
     LEFT JOIN vehiculos v ON v.id = a.vehiculo_id
     LEFT JOIN recauda r ON r.chofer_id = c.id AND r.fecha = ?
-    WHERE c.activo = 1
+    WHERE c.activo = 1 $where_tipo
     ORDER BY v.movil ASC, a.turno ASC, c.nombre ASC
 ";
 
 $stmt = $con->prepare($sql);
-$stmt->bind_param("sss", $fecha_filtro, $fecha_filtro, $fecha_filtro);
+if ($tipo_filtro !== '') {
+    $stmt->bind_param("ssss", $fecha_filtro, $fecha_filtro, $fecha_filtro, $tipo_filtro);
+} else {
+    $stmt->bind_param("sss", $fecha_filtro, $fecha_filtro, $fecha_filtro);
+}
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -93,7 +164,7 @@ while ($o = $res_obs->fetch_assoc()) {
 }
 $stmt_obs->close();
 
-// === OBTENER PRÉSTAMOS ACTIVOS (Con subconsulta para el total pagado) ===
+// === OBTENER PRÉSTAMOS ACTIVOS ===
 $prestamos_por_chofer = [];
 $res_prestamos = $con->query("
     SELECT pr.id, pr.chofer_id, pr.valor_cuota, pr.monto_total, pr.cuotas, pr.cuotas_pagas, pr.estado, pr.estado_mora,
@@ -108,6 +179,14 @@ if ($res_prestamos) {
 }
 
 $con->close();
+
+// Configuración visual según el tipo seleccionado
+$config_tipo = [
+    'TAXI' => ['bg' => 'linear-gradient(135deg, #ffc107, #fd7e14)', 'texto' => '#856404', 'icono' => 'fa-taxi'],
+    'REMIS' => ['bg' => 'linear-gradient(135deg, #17a2b8, #0dcaf0)', 'texto' => '#004085', 'icono' => 'fa-car'],
+    'ALQUILER' => ['bg' => 'linear-gradient(135deg, #6f42c1, #6610f2)', 'texto' => '#383d41', 'icono' => 'fa-car-side'],
+];
+$c_tipo = $tipo_filtro !== '' ? $config_tipo[$tipo_filtro] : null;
 ?>
 
 <!doctype html>
@@ -116,7 +195,7 @@ $con->close();
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Cargar Recaudación</title>
+    <title>Cargar Recaudación <?php echo $tipo_filtro ? '- ' . $tipo_filtro : ''; ?></title>
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../css/all.min.css">
     <style>
@@ -231,6 +310,40 @@ $con->close();
             display: inline-flex;
             align-items: center;
             gap: 5px;
+        }
+
+        /* Chip del filtro activo */
+        .chip-filtro {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-quitar-filtro {
+            background: #dc3545;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .btn-quitar-filtro:hover {
+            background: #c82333;
+            color: white;
+            text-decoration: none;
+            transform: scale(1.05);
         }
 
         .choferes-grid {
@@ -357,6 +470,34 @@ $con->close();
         .cargado-hoy {
             background: #cce5ff;
             color: #004085;
+        }
+
+        .badge-mant-vencido {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            animation: pulse-mant 2s infinite;
+        }
+
+        @keyframes pulse-mant {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 5px rgba(220, 53, 69, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+            }
         }
 
         .prestamo-badge {
@@ -715,7 +856,14 @@ $con->close();
     <?php include "menu.php"; ?>
 
     <div class="page-wrapper">
-        <h1 class="page-title"><i class="fas fa-dollar-sign"></i> Cargar Recaudación</h1>
+        <h1 class="page-title">
+            <i class="fas fa-dollar-sign"></i> Cargar Recaudación
+            <?php if ($c_tipo): ?>
+                <span class="chip-filtro" style="background: <?php echo $c_tipo['bg']; ?>;">
+                    <i class="fas <?php echo $c_tipo['icono']; ?>"></i> <?php echo $tipo_filtro; ?>
+                </span>
+            <?php endif; ?>
+        </h1>
         <p class="subtitle">Elegí el chofer y la fecha del movimiento</p>
 
         <div class="fecha-filtro-container">
@@ -723,6 +871,10 @@ $con->close();
                 <?php if ($es_nueva_pestana): ?>
                     <input type="hidden" name="nueva" value="1">
                 <?php endif; ?>
+                <?php if ($tipo_filtro !== ''): ?>
+                    <input type="hidden" name="tipo" value="<?php echo htmlspecialchars($tipo_filtro); ?>">
+                <?php endif; ?>
+
                 <label for="fecha"><i class="fas fa-calendar-alt"></i> Fecha:</label>
                 <input type="date" id="fecha" name="fecha" value="<?php echo htmlspecialchars($fecha_filtro); ?>" max="<?php echo date('Y-m-d'); ?>" onchange="this.form.submit()">
             </form>
@@ -736,19 +888,28 @@ $con->close();
             <?php endif; ?>
 
             <?php if (!$es_hoy): ?>
-                <a href="cargar_selector.php<?php echo $es_nueva_pestana ? '?nueva=1' : ''; ?>" class="btn-fecha btn-hoy"><i class="fas fa-calendar-day"></i> Ver hoy</a>
+                <a href="cargar_selector.php?fecha=<?php echo date('Y-m-d'); ?><?php echo $param_nueva; ?><?php echo $tipo_filtro ? '&tipo=' . urlencode($tipo_filtro) : ''; ?>" class="btn-fecha btn-hoy"><i class="fas fa-calendar-day"></i> Ver hoy</a>
             <?php endif; ?>
 
             <?php if (!$es_ayer): ?>
-                <a href="cargar_selector.php?fecha=<?php echo date('Y-m-d', strtotime('-1 day')); ?><?php echo $param_nueva; ?>" class="btn-fecha btn-ayer"><i class="fas fa-calendar-minus"></i> Ver ayer</a>
+                <a href="cargar_selector.php?fecha=<?php echo date('Y-m-d', strtotime('-1 day')); ?><?php echo $param_nueva; ?><?php echo $tipo_filtro ? '&tipo=' . urlencode($tipo_filtro) : ''; ?>" class="btn-fecha btn-ayer"><i class="fas fa-calendar-minus"></i> Ver ayer</a>
+            <?php endif; ?>
+
+            <?php if ($tipo_filtro !== ''): ?>
+                <!-- Botón para quitar el filtro -->
+                <a href="cargar_selector.php?tipo=todos<?php echo $param_nueva; ?>" class="btn-quitar-filtro" title="Quitar filtro y ver todos los tipos">
+                    <i class="fas fa-times"></i> Ver Todos
+                </a>
             <?php endif; ?>
         </div>
 
         <?php if (empty($choferes)): ?>
             <div class="empty-state">
                 <i class="fas fa-users-slash"></i>
-                <p>No hay choferes activos.</p>
-                <p>Creá uno desde <a href="chofer_nuevo.php">Nuevo Chofer</a>.</p>
+                <p>No hay choferes activos<?php echo $tipo_filtro ? ' con vehículos de tipo ' . $tipo_filtro : ''; ?>.</p>
+                <?php if ($tipo_filtro !== ''): ?>
+                    <p><a href="cargar_selector.php?fecha=<?php echo $fecha_filtro; ?><?php echo $param_nueva; ?>">Ver todos los tipos de vehículos</a></p>
+                <?php endif; ?>
             </div>
         <?php else: ?>
             <div class="choferes-grid">
@@ -771,6 +932,28 @@ $con->close();
                     $obs_list = $obs_por_chofer[(int)$c['id']] ?? [];
                     $chofer_id_card = (int)$c['id'];
 
+                    // === CÁLCULO DE MANTENIMIENTO VENCIDO ===
+                    $mantenimiento_vencido = '';
+                    if ($tieneAuto) {
+                        $kmg = (int)($c['km_guardados'] ?? 0);
+                        $kma = (int)($c['km_actuales'] ?? 0);
+
+                        $aceite = calcMant($kma, $kmg, $c['km_aceite'] ?? null, INTERVALO_ACEITE, 'Aceite');
+                        $bujias = calcMant($kma, $kmg, $c['km_bujias'] ?? null, INTERVALO_BUJIAS, 'Bujías');
+                        $grasa  = calcMant($kma, $kmg, $c['km_grasa']  ?? null, INTERVALO_GRASA,  'Grasa');
+                        $correa = calcMant($kma, $kmg, $c['km_correa'] ?? null, INTERVALO_CORREA, 'Correa');
+
+                        $vencidos = [];
+                        if ($aceite['class'] == 'badge-vencido') $vencidos[] = 'Aceite';
+                        if ($bujias['class'] == 'badge-vencido') $vencidos[] = 'Bujías';
+                        if ($grasa['class'] == 'badge-vencido') $vencidos[] = 'Grasa';
+                        if ($correa['class'] == 'badge-vencido') $vencidos[] = 'Correa';
+
+                        if (!empty($vencidos)) {
+                            $mantenimiento_vencido = implode(', ', $vencidos);
+                        }
+                    }
+
                     // === LÓGICA INDEPENDIENTE DE PRÉSTAMOS ===
                     $prestamos_chofer = $prestamos_por_chofer[$chofer_id_card] ?? [];
                     $tiene_prestamo = !empty($prestamos_chofer);
@@ -780,9 +963,7 @@ $con->close();
 
                     if ($tiene_prestamo) {
                         foreach ($prestamos_chofer as $pr) {
-                            // AHORA LA DEUDA SE CALCULA CON EL TOTAL PAGADO REAL
                             $deuda_real = floatval($pr['monto_total']) - floatval($pr['total_pagado']);
-
                             if ($pr['estado_mora'] === 'EN MORA') {
                                 $tiene_mora = true;
                                 $valor_cuota_mostrar = floatval($pr['valor_cuota']);
@@ -817,6 +998,12 @@ $con->close();
                                             </span>
                                         <?php else: ?>
                                             <span class="sin-auto-badge"><i class="fas fa-exclamation-triangle"></i> Sin auto</span>
+                                        <?php endif; ?>
+
+                                        <?php if (!empty($mantenimiento_vencido)): ?>
+                                            <span class="badge-mant-vencido" title="Hacé clic en KM para actualizar">
+                                                <i class="fas fa-tools"></i> Vencido: <?php echo htmlspecialchars($mantenimiento_vencido); ?>
+                                            </span>
                                         <?php endif; ?>
 
                                         <?php if ($tieneRecauda): ?>
@@ -871,7 +1058,6 @@ $con->close();
                                     <i class="fas fa-arrow-right"></i> Sin auto — tocá para cargar pago/deuda
                                 </div>
                             <?php endif; ?>
-
 
                         </a>
 

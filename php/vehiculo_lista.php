@@ -160,6 +160,15 @@ $flash_err = isset($_GET['err']);
             gap: 6px;
         }
 
+        /* ===== BARRA DE ACCIONES: NUEVO + LEYENDA ===== */
+        .barra-acciones {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
         .btn-nuevo {
             background: linear-gradient(135deg, #17a2b8, #0dcaf0);
             color: white;
@@ -171,13 +180,46 @@ $flash_err = isset($_GET['err']);
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            margin-bottom: 12px;
+            transition: all 0.2s;
         }
 
         .btn-nuevo:hover {
             color: white;
             opacity: 0.9;
             text-decoration: none;
+            transform: translateY(-1px);
+        }
+
+        /* Leyenda de intervalos de mantenimiento */
+        .leyenda-mant {
+            background: #ffffff;
+            border: 1px solid #dfe6ef;
+            border-left: 4px solid #17a2b8;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 0.76rem;
+            color: #555;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            line-height: 1.5;
+        }
+
+        .leyenda-mant i {
+            color: #17a2b8;
+            font-size: 0.9rem;
+        }
+
+        .leyenda-mant strong {
+            color: #333;
+            font-weight: 700;
+        }
+
+        .leyenda-mant .separador {
+            color: #ccc;
+            font-weight: 400;
         }
 
         table {
@@ -459,6 +501,28 @@ $flash_err = isset($_GET['err']);
             color: #667eea;
         }
 
+        /* NUEVO: Aviso dentro del modal para cargar km al llegar al límite */
+        .aviso-cargar-km {
+            background: linear-gradient(135deg, #fff8e1, #fff3cd);
+            border-left: 4px solid #ffc107;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 16px;
+            font-size: 0.8rem;
+            color: #856404;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            line-height: 1.35;
+        }
+
+        .aviso-cargar-km i {
+            color: #ffc107;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
         .km-section {
             margin-bottom: 16px;
             padding-bottom: 16px;
@@ -637,7 +701,21 @@ $flash_err = isset($_GET['err']);
             </div>
         <?php endif; ?>
 
-        <a href="vehiculo_nuevo.php" class="btn-nuevo"><i class="fas fa-plus"></i> Nuevo Vehículo</a>
+        <!-- BARRA DE ACCIONES CON LEYENDA DE MANTENIMIENTO -->
+        <div class="barra-acciones">
+            <a href="vehiculo_nuevo.php" class="btn-nuevo"><i class="fas fa-plus"></i> Nuevo Vehículo</a>
+
+            <div class="leyenda-mant">
+                <i class="fas fa-tools"></i>
+                <span><strong>Aceite</strong> c/<?php echo number_format(INTERVALO_ACEITE, 0, ',', '.'); ?> Km</span>
+                <span class="separador">—</span>
+                <span><strong>Bujías</strong> c/<?php echo number_format(INTERVALO_BUJIAS, 0, ',', '.'); ?> Km</span>
+                <span class="separador">—</span>
+                <span><strong>Correa</strong> c/<?php echo number_format(INTERVALO_CORREA, 0, ',', '.'); ?> Km</span>
+                <span class="separador">—</span>
+                <span><strong>Grasa caja</strong> c/<?php echo number_format(INTERVALO_GRASA, 0, ',', '.'); ?> Km</span>
+            </div>
+        </div>
 
         <table>
             <thead>
@@ -769,6 +847,12 @@ $flash_err = isset($_GET['err']);
                 <span style="margin-top:4px; padding-top:4px; border-top:1px dashed #c5d3f0;">
                     <i class="fas fa-user-check"></i> Vas a guardar como: <strong><?php echo htmlspecialchars($usuario_nombre); ?></strong>
                 </span>
+            </div>
+
+            <!-- NUEVO: LEYENDA DENTRO DEL MODAL -->
+            <div class="aviso-cargar-km">
+                <i class="fas fa-lightbulb"></i>
+                <span>Cuando llegue a algún límite, cargar los km en el casillero que corresponda.</span>
             </div>
 
             <form method="POST" action="vehiculo_km_guardar.php">

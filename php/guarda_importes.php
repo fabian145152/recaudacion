@@ -7,7 +7,7 @@ include_once "../funciones/funciones.php";
 $con = conexion();
 $con->set_charset("utf8mb4");
 
-// === AUTO-MIGRACIÓN (por si no se corrió el SQL) ===
+// === AUTO-MIGRACIÓN ===
 $check1 = $con->query("SHOW COLUMNS FROM recauda LIKE 'registrado_por'");
 if ($check1 && $check1->num_rows === 0) {
     $con->query("ALTER TABLE recauda ADD COLUMN registrado_por VARCHAR(100) DEFAULT NULL");
@@ -37,9 +37,17 @@ $turno        = strtoupper(limpiar($_POST['turno'] ?? ''));
 $movil        = (int)($_POST['movil'] ?? 0);
 $chofer_id    = (int)($_POST['chofer_id'] ?? 0);
 $vehiculo_id  = (int)($_POST['vehiculo_id'] ?? 0);
-if ($vehiculo_id <= 0) $vehiculo_id = null;
 $fecha        = limpiar($_POST['fecha'] ?? date("Y-m-d"));
 $sin_auto     = isset($_POST['sin_auto']) && $_POST['sin_auto'] === '1';
+// Leer tipo del POST, o de sesión como respaldo
+$tipo_filtro = $_POST['tipo'] ?? '';
+$tipos_validos = ['TAXI', 'REMIS', 'ALQUILER'];
+if (!in_array($tipo_filtro, $tipos_validos)) {
+    $tipo_filtro = $_SESSION['tipo_filtro_actual'] ?? '';
+    if (!in_array($tipo_filtro, $tipos_validos)) {
+        $tipo_filtro = '';
+    }
+}
 
 $observaciones = trim($_POST['observaciones'] ?? '');
 $modo_edicion = isset($_POST['modo_edicion']) && $_POST['modo_edicion'] == '1';
@@ -110,9 +118,7 @@ if ($foto) {
 
 $con->begin_transaction();
 try {
-    $vehiculo_id_str = ($vehiculo_id === null) ? null : (string)$vehiculo_id;
-
-    // === INSERT / UPDATE CON TRACKING DE USUARIO ===
+    // === INSERT / UPDATE ===
     $stmt = $con->prepare("
         INSERT INTO recauda 
         (fecha, chofer_id, vehiculo_id, movil, turno, abono_diario, paga, voucher, porcent, comision, total, mp, ft, debe, observaciones, registrado_por, registrado_fecha)
@@ -134,10 +140,10 @@ try {
             registrado_fecha = VALUES(registrado_fecha)
     ");
     $stmt->bind_param(
-        "sisisdddddddsss",
+        "siiisddddddddsss",
         $fecha,
         $chofer_id,
-        $vehiculo_id_str,
+        $vehiculo_id,
         $movil,
         $turno,
         $abono_diario,
@@ -152,11 +158,17 @@ try {
         $usuario_nombre,
         $ahora
     );
-    $stmt->execute();
+
+    if (!$stmt->execute()) {
+        throw new Exception("Error SQL al guardar la recaudación: " . $stmt->error);
+    }
     $stmt->close();
 
-    // === OBTENER ID DE LA RECAUDA ===
+    // === OBTENER ID ===
     $stmt = $con->prepare("SELECT id FROM recauda WHERE fecha = ? AND chofer_id = ? LIMIT 1");
+    if (!$stmt) {
+        throw new Exception("Error al buscar el ID: " . $con->error);
+    }
     $stmt->bind_param("si", $fecha, $chofer_id);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
@@ -212,7 +224,16 @@ try {
     $nombre_chofer = $row_chofer ? $row_chofer['nombre'] : 'Desconocido';
     $stmt_nombre->close();
 
+    // === CONSTRUIR REDIRECT CON TIPO PRESERVADO ===
     $nueva_redirect = (isset($_POST['nueva']) && $_POST['nueva'] == '1') ? '&nueva=1' : '';
+    // Redirect con tipo preservado: POST > sesión > nada
+    $tipo_para_redirect = $tipo_filtro;
+    if (!in_array($tipo_para_redirect, ['TAXI', 'REMIS', 'ALQUILER'])) {
+        $tipo_para_redirect = $_SESSION['tipo_filtro_actual'] ?? '';
+    }
+    $tipo_redirect = in_array($tipo_para_redirect, ['TAXI', 'REMIS', 'ALQUILER'])
+        ? '&tipo=' . urlencode($tipo_para_redirect)
+        : '';
     $fecha_url = urlencode($fecha);
     $fmt_deposito = number_format($deposito, 2, ',', '.');
     $fmt_abono = number_format($abono_diario, 2, ',', '.');
@@ -222,16 +243,17 @@ try {
     $texto_obs = !empty($observaciones) ? "\\nObservaciones: " . addslashes($observaciones) : "";
 
     echo "<script>
-        var confirmar = confirm('✅ $msj correctamente.\\n\\nFecha: $fecha_mostrar\\nChofer: $nombre_chofer\\nAbono esperado: \\$$fmt_abono\\nTotal Depositado: \\$$fmt_deposito$texto_obs\\n\\nGuardado por: $usuario_nombre\\n\\n¿Confirmás que los datos son correctos?');
+        var confirmar = confirm('✅ $msj correctamente.\\n\\nFecha: $fecha_mostrar\\nChofer: $nombre_chofer\\nAbono esperado: \\$$fmt_abono\\nTotal Depositado: \\$$fmt_deposito$texto_obs\\n\\n¿Confirmás que los datos son correctos?');
         if (confirmar) {
-            window.location='cargar_selector.php?fecha=$fecha_url$nueva_redirect';
+            window.location='cargar_selector.php?fecha=$fecha_url$nueva_redirect$tipo_redirect';
         } else {
             window.history.back();
         }
     </script>";
 } catch (Exception $e) {
     $con->rollback();
-    echo "<script>alert('❌ Error: " . addslashes($e->getMessage()) . "'); window.history.back();</script>";
+    $error_msg = addslashes($e->getMessage());
+    echo "<script>alert('❌ Error: $error_msg'); window.history.back();</script>";
 }
 
 $con->close();

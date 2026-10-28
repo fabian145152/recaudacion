@@ -28,14 +28,10 @@ $__logueado = isset($_SESSION['id_usuario']);
     </a>
 
     <div class="nav-links">
-        <a href="usuarios.php<?php echo $param_nueva; ?>"><i class="fas fa-user-shield"></i> Usuarios</a>
-        <a href="cambiar_password.php<?php echo $param_nueva; ?>"><i class="fas fa-key"></i> Mi clave</a>
         <a href="taxis.php<?php echo $param_nueva; ?>"><i class="fas fa-users"></i> Choferes</a>
         <a href="chofer_nuevo.php<?php echo $param_nueva; ?>"><i class="fas fa-user-plus"></i> Nuevo Chofer</a>
         <a href="vehiculo_lista.php<?php echo $param_nueva; ?>"><i class="fas fa-car-side"></i> Vehículos</a>
         <a href="cargar_selector.php<?php echo $param_nueva; ?>"><i class="fas fa-dollar-sign"></i> Cargar</a>
-        <a href="cuenta.php<?php echo $param_nueva; ?>"><i class="fas fa-wallet"></i> Cuenta</a>
-        <a href="ver_recauda.php<?php echo $param_nueva; ?>"><i class="fas fa-chart-line"></i> Planilla</a>
     </div>
 
     <div class="nav-user">
@@ -47,10 +43,7 @@ $__logueado = isset($_SESSION['id_usuario']);
             <a href="<?php echo $base; ?>cerrar_sesion.php" class="nav-logout" title="Cerrar sesión">
                 <i class="fas fa-sign-out-alt"></i> Salir
             </a>
-        <?php else: ?>
-            <a href="<?php echo $base; ?>index.php" class="nav-home">
-                <i class="fas fa-sign-in-alt"></i> Ingresar
-            </a>
+       
         <?php endif; ?>
     </div>
 </nav>

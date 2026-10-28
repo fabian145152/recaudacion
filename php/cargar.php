@@ -6,6 +6,23 @@ include_once "../funciones/funciones.php";
 $con = conexion();
 $con->set_charset("utf8mb4");
 
+// === CAPTURAR TIPO (con respaldo en sesión) ===
+$tipo_filtro = $_GET['tipo'] ?? '';
+$tipos_validos = ['TAXI', 'REMIS', 'ALQUILER'];
+
+if (!in_array($tipo_filtro, $tipos_validos)) {
+    // No vino por URL → usar lo que haya en sesión
+    $tipo_filtro = $_SESSION['tipo_filtro_actual'] ?? '';
+    if (!in_array($tipo_filtro, $tipos_validos)) {
+        $tipo_filtro = '';
+    }
+} else {
+    // Vino por URL → refrescar sesión
+    $_SESSION['tipo_filtro_actual'] = $tipo_filtro;
+}
+
+$param_tipo = $tipo_filtro ? '&tipo=' . urlencode($tipo_filtro) : '';
+
 // === DETERMINAR EL CHOFER ===
 $chofer_id = null;
 $chofer = null;
@@ -60,12 +77,11 @@ $stmt->execute();
 $asignacion = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-// ⚠️ NO morimos si no hay asignación — permitimos cargar igual
 $sin_auto = false;
 
 if (!$asignacion) {
     $sin_auto    = true;
-    $turno       = 'DIA';   // fallback (la columna es NOT NULL)
+    $turno       = 'DIA';
     $vehiculo_id = 0;
     $movil       = 0;
     $marca       = '—';
@@ -115,7 +131,7 @@ $es_hoy = ($fecha === date('Y-m-d'));
 $es_nueva_pestana = isset($_GET['nueva']) && $_GET['nueva'] == '1';
 $param_nueva = $es_nueva_pestana ? '&nueva=1' : '';
 
-// === RECAUDACIÓN DEL DÍA (por fecha + chofer, respeta UNIQUE de la tabla) ===
+// === RECAUDACIÓN DEL DÍA ===
 $stmt = $con->prepare("SELECT * FROM recauda WHERE fecha = ? AND chofer_id = ?");
 $stmt->bind_param("si", $fecha, $chofer_id);
 $stmt->execute();
@@ -667,6 +683,17 @@ foreach ($movs_caja_dia as $m) {
             text-align: center;
             cursor: not-allowed;
         }
+
+        /* Chip del tipo de vehículo */
+        .chip-tipo {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
     </style>
 </head>
 
@@ -689,6 +716,11 @@ foreach ($movs_caja_dia as $m) {
                 <h1 class="turno-label">
                     <?php echo $sin_auto ? 'SIN AUTO' : 'TURNO ' . htmlspecialchars($turno); ?>
                 </h1>
+                <?php if ($tipo_filtro): ?>
+                    <span class="chip-tipo">
+                        <i class="fas fa-filter"></i> <?php echo htmlspecialchars($tipo_filtro); ?>
+                    </span>
+                <?php endif; ?>
             </div>
             <div class="turno-info">
                 <?php if (!$sin_auto): ?>
@@ -754,6 +786,8 @@ foreach ($movs_caja_dia as $m) {
             <input type="hidden" name="fecha" value="<?php echo htmlspecialchars($fecha); ?>">
             <input type="hidden" name="sin_auto" value="<?php echo $sin_auto ? '1' : '0'; ?>">
             <input type="hidden" name="modo_edicion" id="modo_edicion" value="0">
+            <!-- NUEVO: envío del tipo de vehículo para que no se pierda el filtro -->
+            <input type="hidden" name="tipo" value="<?php echo htmlspecialchars($tipo_filtro); ?>">
 
             <?php if ($es_nueva_pestana): ?>
                 <input type="hidden" name="nueva" value="1">
@@ -919,7 +953,8 @@ foreach ($movs_caja_dia as $m) {
             <?php endif; ?>
 
             <div class="acciones">
-                <a href="cargar_selector.php?fecha=<?php echo urlencode($fecha); ?><?php echo $param_nueva; ?>" class="btn-volver"><i class="fas fa-arrow-left"></i> Volver</a>
+                <!-- VOLVER: mantiene el filtro tipo -->
+                <a href="cargar_selector.php?fecha=<?php echo urlencode($fecha); ?><?php echo $param_nueva; ?><?php echo $param_tipo; ?>" class="btn-volver"><i class="fas fa-arrow-left"></i> Volver</a>
                 <button type="submit" class="btn-enviar"><i class="fas fa-save"></i> Guardar y sumar</button>
             </div>
         </form>

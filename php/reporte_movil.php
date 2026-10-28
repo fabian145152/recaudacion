@@ -5,16 +5,14 @@ $con->set_charset("utf8mb4");
 
 // === FILTROS ===
 $mes_filtro = $_GET['mes'] ?? date('Y-m');
-$movil_filtro = isset($_GET['movil']) ? (int)$_GET['movil'] : 0;
+$chofer_filtro = isset($_GET['chofer']) ? (int)$_GET['chofer'] : 0;
 
-// Obtener todos los móviles para el select
-$vehiculos = $con->query("
-    SELECT DISTINCT v.movil, c.nombre 
-    FROM vehiculos v
-    LEFT JOIN asignaciones_auto a ON v.id = a.vehiculo_id AND a.activa = 1
-    LEFT JOIN choferes c ON a.chofer_id = c.id
-    WHERE v.activo = 1
-    ORDER BY v.movil ASC
+// Obtener todos los choferes para el select (activos o que tengan recaudaciones históricas)
+$choferes_lista = $con->query("
+    SELECT id, nombre 
+    FROM choferes 
+    WHERE activo = 1 OR id IN (SELECT DISTINCT chofer_id FROM recauda)
+    ORDER BY nombre ASC
 ")->fetch_all(MYSQLI_ASSOC);
 
 // === OBTENER MOVIMIENTOS ===
@@ -31,27 +29,25 @@ $total_general = [
     'deposito' => 0
 ];
 
-if ($movil_filtro > 0) {
-    $stmt_ch = $con->prepare("
-        SELECT c.nombre 
-        FROM asignaciones_auto a
-        INNER JOIN vehiculos v ON v.id = a.vehiculo_id
-        INNER JOIN choferes c ON c.id = a.chofer_id
-        WHERE v.movil = ? AND a.activa = 1 LIMIT 1
-    ");
-    $stmt_ch->bind_param("i", $movil_filtro);
+if ($chofer_filtro > 0) {
+    // Buscar el nombre del chofer para el título
+    $stmt_ch = $con->prepare("SELECT nombre FROM choferes WHERE id = ? LIMIT 1");
+    $stmt_ch->bind_param("i", $chofer_filtro);
     $stmt_ch->execute();
     $res_ch = $stmt_ch->get_result()->fetch_assoc();
     if ($res_ch) $nombre_chofer = $res_ch['nombre'];
     $stmt_ch->close();
 
+    // Traer recaudaciones filtrando SOLO por chofer_id
     $stmt = $con->prepare("
-        SELECT * FROM recauda 
-        WHERE movil = ? AND fecha LIKE ?
-        ORDER BY fecha ASC
+        SELECT r.*, v.movil AS vehiculo_movil
+        FROM recauda r
+        LEFT JOIN vehiculos v ON v.id = r.vehiculo_id
+        WHERE r.chofer_id = ? AND r.fecha LIKE ?
+        ORDER BY r.fecha ASC
     ");
     $mes_like = $mes_filtro . '-%';
-    $stmt->bind_param("is", $movil_filtro, $mes_like);
+    $stmt->bind_param("is", $chofer_filtro, $mes_like);
     $stmt->execute();
     $res = $stmt->get_result();
 
@@ -83,7 +79,7 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Reporte de Caja por Móvil</title>
+    <title>Reporte de Caja por Chofer</title>
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/all.min.css">
     <style>
@@ -245,7 +241,6 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
             border-top: 2px solid #000;
         }
 
-        /* ESTILO DEL BOTÓN ELIMINAR */
         .btn-eliminar {
             background-color: #dc3545;
             color: white !important;
@@ -268,7 +263,7 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
 <body>
 
     <div class="page-wrapper">
-        <h1 style="text-align: center; font-size: 1.4rem; color: #333; margin-bottom: 20px;"><i class="fas fa-file-excel"></i> Reporte de Movimientos por Móvil</h1>
+        <h1 style="text-align: center; font-size: 1.4rem; color: #333; margin-bottom: 20px;"><i class="fas fa-file-excel"></i> Reporte de Movimientos por Chofer</h1>
 
         <div class="filtros-card">
             <form method="GET" action="reporte_movil.php" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin: 0; width: 100%;">
@@ -277,19 +272,19 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
                     <input type="month" name="mes" class="form-control" value="<?php echo htmlspecialchars($mes_filtro); ?>" required>
                 </div>
                 <div>
-                    <label class="form-label">Móvil / Unidad</label>
-                    <select name="movil" class="form-select" style="min-width: 200px;" required>
-                        <option value="">Seleccione un móvil...</option>
-                        <?php foreach ($vehiculos as $v): ?>
-                            <option value="<?php echo $v['movil']; ?>" <?php echo ($movil_filtro == $v['movil']) ? 'selected' : ''; ?>>
-                                #<?php echo $v['movil']; ?> - <?php echo htmlspecialchars($v['nombre'] ?: 'Sin chofer'); ?>
+                    <label class="form-label">Chofer</label>
+                    <select name="chofer" class="form-select" style="min-width: 250px;" required>
+                        <option value="">Seleccione un chofer...</option>
+                        <?php foreach ($choferes_lista as $c): ?>
+                            <option value="<?php echo $c['id']; ?>" <?php echo ($chofer_filtro == $c['id']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($c['nombre']); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <button type="submit" class="btn-buscar"><i class="fas fa-search"></i> Generar Reporte</button>
 
-                <?php if ($movil_filtro > 0 && !empty($movimientos)): ?>
+                <?php if ($chofer_filtro > 0 && !empty($movimientos)): ?>
                     <button type="button" onclick="exportarExcelPro()" class="btn-excel" style="margin-left: auto;">
                         <i class="fas fa-file-excel"></i> Exportar a Excel
                     </button>
@@ -297,19 +292,19 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
             </form>
         </div>
 
-        <?php if ($movil_filtro > 0): ?>
-            <div class="planilla-titulo">Móvil <?php echo $movil_filtro; ?> - <?php echo htmlspecialchars($nombre_chofer); ?></div>
+        <?php if ($chofer_filtro > 0): ?>
+            <div class="planilla-titulo"><?php echo htmlspecialchars($nombre_chofer); ?></div>
             <div class="planilla-subtitulo">MES: <?php echo strtoupper(date('F Y', strtotime($mes_filtro . '-01'))); ?></div>
 
             <?php if (empty($movimientos)): ?>
-                <div class="alert alert-warning text-center">No hay movimientos registrados para este móvil en el mes seleccionado.</div>
+                <div class="alert alert-warning text-center">No hay movimientos registrados para este chofer en el mes seleccionado.</div>
             <?php else: ?>
                 <div style="overflow-x: auto;">
                     <table class="tabla-planilla" id="tabla-exportar">
                         <thead>
                             <tr>
                                 <th colspan="2">FECHA</th>
-                                <th colspan="3">CHOFER</th>
+                                <th colspan="3">MÓVIL UTILIZADO</th>
                                 <th>ABONO</th>
                                 <th>VOUCHER</th>
                                 <th>COMISIÓN</th>
@@ -337,6 +332,9 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
                                 $abono = floatval($m['abono_diario']);
                                 $resultado = $abono - $deposito;
 
+                                // El móvil utilizado ese día (si es que tuvo uno asignado en la recaudación)
+                                $movil_utilizado = $m['vehiculo_movil'] ?? $m['movil'];
+
                                 if ($resultado > 0) {
                                     $estado = "DEBE";
                                     $clase_estado = "celda-roja";
@@ -351,7 +349,9 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
                                 <tr>
                                     <td class="dato-fecha col-fecha" data-fecha="<?php echo $fecha_dt->format('d/m/Y'); ?>"><?php echo $fecha_dt->format('d/m/Y'); ?></td>
                                     <td class="dato-dia col-dia" data-dia="<?php echo $dia_semana; ?>"><?php echo $dia_semana; ?></td>
-                                    <td colspan="3" class="dato-chofer" style="text-align: left; font-weight: 600;" data-chofer="<?php echo htmlspecialchars($nombre_chofer); ?>"><?php echo htmlspecialchars($nombre_chofer); ?></td>
+
+                                    <!-- Mostramos el móvil utilizado para tener registro, aunque la recaudación sea del chofer -->
+                                    <td colspan="3" class="dato-movil" style="text-align: left; font-weight: 600;" data-movil="<?php echo htmlspecialchars($movil_utilizado); ?>">Móvil #<?php echo htmlspecialchars($movil_utilizado); ?></td>
 
                                     <td class="dato-abono" data-abono="<?php echo $abono; ?>">$<?php echo number_format($abono, 2, ',', '.'); ?></td>
                                     <td class="dato-voucher" data-voucher="<?php echo $v_bruto; ?>">$<?php echo number_format($v_bruto, 2, ',', '.'); ?></td>
@@ -367,9 +367,8 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
                                     </td>
                                     <td class="dato-obs" data-obs="<?php echo htmlspecialchars($m['observaciones']); ?>" style="text-align: left; font-size: 0.75rem;"><?php echo htmlspecialchars($m['observaciones']); ?></td>
 
-                                    <!-- BOTÓN ELIMINAR CORREGIDO (Con texto rojo visible) -->
                                     <td style="text-align: center; background-color: #fff5f5;">
-                                        <a href="eliminar_recauda.php?id=<?php echo $m['id']; ?>&volver=reporte_movil.php?mes=<?php echo $mes_filtro; ?>&movil=<?php echo $movil_filtro; ?>"
+                                        <a href="eliminar_recauda.php?id=<?php echo $m['id']; ?>&volver=reporte_movil.php?mes=<?php echo $mes_filtro; ?>&chofer=<?php echo $chofer_filtro; ?>"
                                             class="btn-eliminar"
                                             onclick="return confirm('¿Estás seguro de eliminar este registro? Se borrará la recaudación y la deuda de este día.');">
                                             Eliminar
@@ -408,7 +407,7 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
     <script>
         async function exportarExcelPro() {
             const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet('Planilla_Movil');
+            const worksheet = workbook.addWorksheet('Planilla_Chofer');
 
             worksheet.columns = [{
                     header: 'FECHA',
@@ -421,9 +420,9 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
                     width: 12
                 },
                 {
-                    header: 'CHOFER',
-                    key: 'chofer',
-                    width: 25
+                    header: 'MÓVIL UTILIZADO',
+                    key: 'movil',
+                    width: 20
                 },
                 {
                     header: 'ABONO',
@@ -500,7 +499,7 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
             filas.forEach((tr) => {
                 const fecha = tr.querySelector('.dato-fecha').getAttribute('data-fecha');
                 const dia = tr.querySelector('.dato-dia').getAttribute('data-dia');
-                const nombreChofer = tr.querySelector('.dato-chofer').getAttribute('data-chofer');
+                const movil = tr.querySelector('.dato-movil').getAttribute('data-movil');
                 const abono = parseFloat(tr.querySelector('.dato-abono').getAttribute('data-abono'));
                 const voucher = parseFloat(tr.querySelector('.dato-voucher').getAttribute('data-voucher'));
                 const comision = parseFloat(tr.querySelector('.dato-comision').getAttribute('data-comision'));
@@ -514,7 +513,7 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
                 const fila = worksheet.addRow({
                     fecha: fecha,
                     dia: dia,
-                    chofer: nombreChofer,
+                    movil: movil,
                     abono: abono,
                     voucher: voucher,
                     comision: comision,
@@ -587,7 +586,7 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
             const totalRow = worksheet.addRow({
                 fecha: '',
                 dia: '',
-                chofer: 'TOTALES DEL MES',
+                movil: 'TOTALES DEL MES',
                 abono: <?php echo $total_general['abono']; ?>,
                 voucher: <?php echo $total_general['voucher_bruto']; ?>,
                 comision: <?php echo $total_general['comision']; ?>,
@@ -653,13 +652,13 @@ $texto_balance = $balance_general > 0 ? "DEBE" : ($balance_general < 0 ? "A FAVO
             }
 
             const mes = "<?php echo $mes_filtro; ?>";
-            const movil = "<?php echo $movil_filtro; ?>";
+            const nombreChofer = "<?php echo addslashes($nombre_chofer); ?>".replace(/\s+/g, '_');
 
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], {
                 type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             });
-            saveAs(blob, `Planilla_Movil_${movil}_${mes}.xlsx`);
+            saveAs(blob, `Planilla_Chofer_${nombreChofer}_${mes}.xlsx`);
         }
     </script>
 </body>

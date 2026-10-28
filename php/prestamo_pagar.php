@@ -1,11 +1,25 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 include_once "../funciones/funciones.php";
 $con = conexion();
 $con->set_charset("utf8mb4");
 
+// Auto-migración
+$check = $con->query("SHOW COLUMNS FROM prestamos_pagos LIKE 'registrado_por'");
+if ($check && $check->num_rows === 0) {
+    $con->query("ALTER TABLE prestamos_pagos ADD COLUMN registrado_por VARCHAR(100) DEFAULT NULL");
+    $con->query("ALTER TABLE prestamos_pagos ADD COLUMN editado_por VARCHAR(100) DEFAULT NULL");
+    $con->query("ALTER TABLE prestamos_pagos ADD COLUMN editado_fecha DATETIME DEFAULT NULL");
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prestamo_id = (int)$_POST['prestamo_id'];
-    $monto_manual = floatval($_POST['monto_pago'] ?? 0); // Recibimos el monto del input
+    $monto_manual = floatval($_POST['monto_pago'] ?? 0);
+
+    // === QUIÉN REGISTRA EL PAGO ===
+    $usuario_nombre = $_SESSION['nombre'] ?? ($_SESSION['usuario'] ?? 'Desconocido');
 
     // 1. Obtener datos del préstamo y el total pagado
     $stmt = $con->prepare("
@@ -27,14 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // 2. Calcular el saldo real pendiente
             $saldo_pendiente = floatval($prestamo['monto_total']) - floatval($prestamo['total_pagado']);
 
-            // Si no se envió monto, cobramos la cuota normal (o el saldo si es menor)
             if ($monto_manual <= 0) {
                 $monto_a_pagar = ($saldo_pendiente < floatval($prestamo['valor_cuota'])) ? $saldo_pendiente : floatval($prestamo['valor_cuota']);
             } else {
                 $monto_a_pagar = $monto_manual;
             }
 
-            // Validar que el monto no supere el saldo pendiente
             if ($monto_a_pagar > $saldo_pendiente) {
                 $monto_a_pagar = $saldo_pendiente;
             }
@@ -45,9 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("El monto a pagar debe ser mayor a 0.");
             }
 
-            // 3. Registrar el pago
-            $stmt_pago = $con->prepare("INSERT INTO prestamos_pagos (prestamo_id, monto, fecha_pago) VALUES (?, ?, ?)");
-            $stmt_pago->bind_param("ids", $prestamo_id, $monto_a_pagar, $hoy);
+            // 3. Registrar el pago CON datos de auditoría
+            $stmt_pago = $con->prepare("INSERT INTO prestamos_pagos (prestamo_id, monto, fecha_pago, registrado_por) VALUES (?, ?, ?, ?)");
+            $stmt_pago->bind_param("idss", $prestamo_id, $monto_a_pagar, $hoy, $usuario_nombre);
             $stmt_pago->execute();
             $stmt_pago->close();
 
@@ -62,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt_update->execute();
                 $stmt_update->close();
             } else {
-                // Si no terminó, actualizamos las cuotas proporcionalmente
                 $cuotas_equivalentes = $monto_a_pagar / floatval($prestamo['valor_cuota']);
                 $nuevas_cuotas_pagas = floatval($prestamo['cuotas_pagas']) + $cuotas_equivalentes;
 
@@ -73,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $con->commit();
-            echo json_encode(['ok' => true]); // Devolvemos JSON para que el JS sepa que terminó
+            echo json_encode(['ok' => true]);
             exit;
         } catch (Exception $e) {
             $con->rollback();
