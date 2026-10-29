@@ -6,33 +6,28 @@ include_once "../funciones/funciones.php";
 $con = conexion();
 $con->set_charset("utf8mb4");
 
+// === AUTO-MIGRACIÓN: agregar columna color si no existe ===
+$check = $con->query("SHOW COLUMNS FROM vehiculos LIKE 'color'");
+if ($check && $check->num_rows === 0) {
+    $con->query("ALTER TABLE vehiculos ADD COLUMN color VARCHAR(20) DEFAULT NULL AFTER modelo");
+}
+
 $sql = "SELECT v.*, 
             (SELECT COUNT(*) FROM asignaciones_auto a WHERE a.vehiculo_id = v.id AND a.activa = 1) AS asignados
         FROM vehiculos v
         ORDER BY v.movil ASC";
 $result = $con->query($sql);
 
-/**
- * Calcula el estado de un ítem de mantenimiento.
- */
 function calcMant($km_actuales, $km_guardados, $km_ultimo, $intervalo, $nombre)
 {
     if ($km_actuales <= 0) {
-        return [
-            'class'   => 'badge-sin',
-            'short'   => '—',
-            'tooltip' => 'Sin km actuales registrados',
-        ];
+        return ['class' => 'badge-sin', 'short' => '—', 'tooltip' => 'Sin km actuales registrados'];
     }
 
     $base = ($km_ultimo !== null && (int)$km_ultimo > 0) ? (int)$km_ultimo : (int)$km_guardados;
 
     if ($base <= 0) {
-        return [
-            'class'   => 'badge-sin',
-            'short'   => '—',
-            'tooltip' => 'Sin datos de ' . $nombre,
-        ];
+        return ['class' => 'badge-sin', 'short' => '—', 'tooltip' => 'Sin datos de ' . $nombre];
     }
 
     $proximo = $base + $intervalo;
@@ -63,13 +58,11 @@ function calcMant($km_actuales, $km_guardados, $km_ultimo, $intervalo, $nombre)
     ];
 }
 
-// === INTERVALOS DE MANTENIMIENTO ===
 define('INTERVALO_ACEITE', 13000);
 define('INTERVALO_BUJIAS', 40000);
 define('INTERVALO_GRASA',  60000);
 define('INTERVALO_CORREA', 50000);
 
-// === USUARIO LOGUEADO ===
 $usuario_nombre = $_SESSION['nombre'] ?? ($_SESSION['usuario'] ?? 'Invitado');
 $usuario_login  = $_SESSION['usuario'] ?? '—';
 
@@ -107,7 +100,6 @@ $flash_err = isset($_GET['err']);
             color: #333;
         }
 
-        /* Banner de usuario logueado */
         .user-banner {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
@@ -160,7 +152,6 @@ $flash_err = isset($_GET['err']);
             gap: 6px;
         }
 
-        /* ===== BARRA DE ACCIONES: NUEVO + LEYENDA ===== */
         .barra-acciones {
             display: flex;
             align-items: center;
@@ -190,7 +181,6 @@ $flash_err = isset($_GET['err']);
             transform: translateY(-1px);
         }
 
-        /* Leyenda de intervalos de mantenimiento */
         .leyenda-mant {
             background: #ffffff;
             border: 1px solid #dfe6ef;
@@ -230,7 +220,7 @@ $flash_err = isset($_GET['err']);
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
             font-size: 0.78rem;
-            min-width: 1250px;
+            min-width: 1350px;
         }
 
         thead {
@@ -286,6 +276,25 @@ $flash_err = isset($_GET['err']);
         .badge-inactivo {
             background: #6c757d;
             color: white;
+        }
+
+        .badge-base {
+            background: #d4edda;
+            color: #155724;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+
+        .badge-color {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 10px;
+            background: #eef1f7;
+            color: #333;
+            font-size: 0.68rem;
+            font-weight: 700;
         }
 
         .acciones-cell {
@@ -347,7 +356,6 @@ $flash_err = isset($_GET['err']);
             color: white;
         }
 
-        /* Badges de mantenimiento */
         .badge-mant {
             display: inline-block;
             padding: 3px 8px;
@@ -391,7 +399,6 @@ $flash_err = isset($_GET['err']);
             font-weight: 400;
         }
 
-        /* Info de última edición */
         .ultima-edicion {
             display: flex;
             flex-direction: column;
@@ -421,7 +428,6 @@ $flash_err = isset($_GET['err']);
             font-weight: 400;
         }
 
-        /* Alertas */
         .alerta {
             padding: 10px 14px;
             border-radius: 6px;
@@ -444,7 +450,6 @@ $flash_err = isset($_GET['err']);
             border-left: 4px solid #dc3545;
         }
 
-        /* Modal */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -501,7 +506,6 @@ $flash_err = isset($_GET['err']);
             color: #667eea;
         }
 
-        /* NUEVO: Aviso dentro del modal para cargar km al llegar al límite */
         .aviso-cargar-km {
             background: linear-gradient(135deg, #fff8e1, #fff3cd);
             border-left: 4px solid #ffc107;
@@ -640,7 +644,6 @@ $flash_err = isset($_GET['err']);
             document.getElementById('modal-km_correa').value = d.correa || '';
             document.getElementById('modal-km_grasa').value = d.grasa || '';
 
-            // Info de última edición
             const ultimoPor = d.editpor || '—';
             const ultimaFecha = d.editfecha || '—';
             document.getElementById('modal-edit-por').innerText = ultimoPor;
@@ -671,7 +674,6 @@ $flash_err = isset($_GET['err']);
     <div class="page-wrapper">
         <h1 class="page-title"><i class="fas fa-car-side"></i> Vehículos de la Flota</h1>
 
-        <!-- BANNER DE USUARIO LOGUEADO -->
         <div class="user-banner">
             <div class="user-info">
                 <div class="user-icon">
@@ -701,7 +703,6 @@ $flash_err = isset($_GET['err']);
             </div>
         <?php endif; ?>
 
-        <!-- BARRA DE ACCIONES CON LEYENDA DE MANTENIMIENTO -->
         <div class="barra-acciones">
             <a href="vehiculo_nuevo.php" class="btn-nuevo"><i class="fas fa-plus"></i> Nuevo Vehículo</a>
 
@@ -723,6 +724,7 @@ $flash_err = isset($_GET['err']);
                     <th>Móvil</th>
                     <th>Marca</th>
                     <th>Modelo</th>
+                    <th>Color</th>
                     <th>Dominio</th>
                     <th>Tipo</th>
                     <th>Estado</th>
@@ -761,8 +763,21 @@ $flash_err = isset($_GET['err']);
                         <td><span class="movil-numero">#<?php echo htmlspecialchars($v['movil']); ?></span></td>
                         <td><?php echo htmlspecialchars($v['marca']); ?></td>
                         <td><?php echo htmlspecialchars($v['modelo']); ?></td>
+                        <td>
+                            <?php if (!empty($v['color'])): ?>
+                                <span class="badge-color"><?php echo htmlspecialchars($v['color']); ?></span>
+                            <?php else: ?>
+                                <span style="color:#bbb;">—</span>
+                            <?php endif; ?>
+                        </td>
                         <td><strong><?php echo htmlspecialchars($v['dominio']); ?></strong></td>
-                        <td><?php echo htmlspecialchars($v['tipo']); ?></td>
+                        <td>
+                            <?php if ($v['tipo'] === 'BASE'): ?>
+                                <span class="badge-base">BASE</span>
+                            <?php else: ?>
+                                <?php echo htmlspecialchars($v['tipo']); ?>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <?php if (!$v['activo']): ?>
                                 <span class="badge-inactivo">Inactivo</span>
@@ -783,7 +798,6 @@ $flash_err = isset($_GET['err']);
                         <td><span class="badge-mant <?php echo $grasa['class']; ?>" title="<?php echo htmlspecialchars($grasa['tooltip']); ?>"><?php echo $grasa['short']; ?></span></td>
                         <td><span class="badge-mant <?php echo $correa['class']; ?>" title="<?php echo htmlspecialchars($correa['tooltip']); ?>"><?php echo $correa['short']; ?></span></td>
 
-                        <!-- ÚLTIMA EDICIÓN -->
                         <td>
                             <div class="ultima-edicion <?php echo !$tiene_edit ? 'sin-datos' : ''; ?>">
                                 <span class="quien" title="Usuario que actualizó los km">
@@ -835,12 +849,10 @@ $flash_err = isset($_GET['err']);
         </table>
     </div>
 
-    <!-- MODAL DE EDICIÓN DE KM -->
     <div class="modal-overlay" id="modalKm">
         <div class="modal-box">
             <h3><i class="fas fa-tachometer-alt"></i> Kilometraje · Móvil #<span id="modal-movil"></span></h3>
 
-            <!-- Info de quién hizo el último cambio -->
             <div class="modal-edit-info">
                 <span><i class="fas fa-history"></i> Última edición: <strong id="modal-edit-por">—</strong></span>
                 <span><i class="fas fa-clock"></i> Fecha: <strong id="modal-edit-fecha">—</strong></span>
@@ -849,7 +861,6 @@ $flash_err = isset($_GET['err']);
                 </span>
             </div>
 
-            <!-- NUEVO: LEYENDA DENTRO DEL MODAL -->
             <div class="aviso-cargar-km">
                 <i class="fas fa-lightbulb"></i>
                 <span>Cuando llegue a algún límite, cargar los km en el casillero que corresponda.</span>

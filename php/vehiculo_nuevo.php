@@ -3,10 +3,17 @@ include_once "../funciones/funciones.php";
 $con = conexion();
 $con->set_charset("utf8mb4");
 
+// === AUTO-MIGRACIÓN: agregar columna color si no existe ===
+$check = $con->query("SHOW COLUMNS FROM vehiculos LIKE 'color'");
+if ($check && $check->num_rows === 0) {
+    $con->query("ALTER TABLE vehiculos ADD COLUMN color VARCHAR(20) DEFAULT NULL AFTER modelo");
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $movil   = (int)($_POST['movil'] ?? 0);
     $marca   = strtoupper(trim($_POST['marca'] ?? ''));
     $modelo  = strtoupper(trim($_POST['modelo'] ?? ''));
+    $color   = strtoupper(trim($_POST['color'] ?? ''));
     $dominio = strtoupper(trim($_POST['dominio'] ?? ''));
     $tipo    = $_POST['tipo'] ?? 'TAXI';
 
@@ -19,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Verificar que el móvil no exista
     $check = $con->prepare("SELECT id FROM vehiculos WHERE movil = ?");
     $check->bind_param("i", $movil);
     $check->execute();
@@ -30,8 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $check->close();
 
-    $stmt = $con->prepare("INSERT INTO vehiculos (movil, marca, modelo, dominio, tipo) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("issss", $movil, $marca, $modelo, $dominio, $tipo);
+    $stmt = $con->prepare("INSERT INTO vehiculos (movil, marca, modelo, color, dominio, tipo) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssss", $movil, $marca, $modelo, $color, $dominio, $tipo);
 
     if ($stmt->execute()) {
         $stmt->close();
@@ -45,7 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Mensaje de error si viene por GET
 $mensaje_error = '';
 if (isset($_GET['msg'])) {
     switch ($_GET['msg']) {
@@ -189,7 +194,6 @@ if (isset($_GET['msg'])) {
             text-decoration: none;
         }
 
-        /* Modal de confirmación */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -328,7 +332,7 @@ if (isset($_GET['msg'])) {
             <div class="icon-big"><i class="fas fa-car-side"></i></div>
             <div>
                 <h1>Nuevo Vehículo</h1>
-                <p style="margin: 3px 0 0 0; opacity: 0.95; font-size: 0.9rem;">Registrar un nuevo taxi con su número de móvil</p>
+                <p style="margin: 3px 0 0 0; opacity: 0.95; font-size: 0.9rem;">Registrar un nuevo vehículo con su número de móvil</p>
             </div>
         </div>
 
@@ -342,23 +346,29 @@ if (isset($_GET['msg'])) {
         <form id="formVehiculo" method="POST" onsubmit="return confirmarDatos(event)">
             <div class="card-section">
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label>Número de móvil <span style="color:#dc3545;">*</span></label>
                             <input type="number" id="movil" name="movil" class="form-control" min="1" max="9999" required>
-                            <small class="text-muted">Número único, no se puede cambiar después.</small>
+                            <small class="text-muted">Número único.</small>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label>Marca <span style="color:#dc3545;">*</span></label>
                             <input type="text" id="marca" name="marca" class="form-control" required>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label>Modelo <span style="color:#dc3545;">*</span></label>
                             <input type="text" id="modelo" name="modelo" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Color</label>
+                            <input type="text" id="color" name="color" class="form-control" placeholder="Ej: BLANCO" maxlength="20">
                         </div>
                     </div>
                 </div>
@@ -376,6 +386,7 @@ if (isset($_GET['msg'])) {
                                 <option value="TAXI">TAXI</option>
                                 <option value="REMIS">REMIS</option>
                                 <option value="ALQUILER">AUTO DE ALQUILER</option>
+                                <option value="BASE">BASE</option>
                             </select>
                         </div>
                     </div>
@@ -389,7 +400,6 @@ if (isset($_GET['msg'])) {
         </form>
     </div>
 
-    <!-- MODAL DE CONFIRMACIÓN -->
     <div class="modal-overlay" id="modalConfirmacion">
         <div class="modal-box">
             <div class="modal-header">
@@ -412,6 +422,10 @@ if (isset($_GET['msg'])) {
                 <div class="dato-confirmacion">
                     <span class="etiqueta">Modelo:</span>
                     <span class="valor" id="conf_modelo">—</span>
+                </div>
+                <div class="dato-confirmacion">
+                    <span class="etiqueta">Color:</span>
+                    <span class="valor" id="conf_color">—</span>
                 </div>
                 <div class="dato-confirmacion">
                     <span class="etiqueta">Dominio:</span>
@@ -449,11 +463,18 @@ if (isset($_GET['msg'])) {
             document.getElementById('conf_movil').textContent = '#' + document.getElementById('movil').value;
             document.getElementById('conf_marca').textContent = document.getElementById('marca').value.toUpperCase();
             document.getElementById('conf_modelo').textContent = document.getElementById('modelo').value.toUpperCase();
+            const colorVal = document.getElementById('color').value.trim();
+            document.getElementById('conf_color').textContent = colorVal ? colorVal.toUpperCase() : '—';
             document.getElementById('conf_dominio').textContent = document.getElementById('dominio').value.toUpperCase();
 
-            // Mostrar el texto amigable si es ALQUILER
             const tipoVal = document.getElementById('tipo').value;
-            document.getElementById('conf_tipo').textContent = (tipoVal === 'ALQUILER') ? 'AUTO DE ALQUILER' : tipoVal;
+            const nombresTipo = {
+                'TAXI': 'TAXI',
+                'REMIS': 'REMIS',
+                'ALQUILER': 'AUTO DE ALQUILER',
+                'BASE': 'BASE'
+            };
+            document.getElementById('conf_tipo').textContent = nombresTipo[tipoVal] || tipoVal;
 
             document.getElementById('modalConfirmacion').classList.add('show');
             return false;
@@ -475,7 +496,6 @@ if (isset($_GET['msg'])) {
             if (e.key === 'Escape') cerrarModal();
         });
 
-        // === BLOQUEAR LA RUEDA DEL MOUSE EN LOS INPUTS NUMÉRICOS ===
         document.querySelectorAll('input[type=number]').forEach(function(input) {
             input.addEventListener('wheel', function(e) {
                 e.preventDefault();

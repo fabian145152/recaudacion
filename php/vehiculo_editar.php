@@ -3,6 +3,12 @@ include_once "../funciones/funciones.php";
 $con = conexion();
 $con->set_charset("utf8mb4");
 
+// === AUTO-MIGRACIÓN: agregar columna color si no existe ===
+$check = $con->query("SHOW COLUMNS FROM vehiculos LIKE 'color'");
+if ($check && $check->num_rows === 0) {
+    $con->query("ALTER TABLE vehiculos ADD COLUMN color VARCHAR(20) DEFAULT NULL AFTER modelo");
+}
+
 if (!isset($_GET['q']) || !is_numeric($_GET['q'])) {
     die("ID de vehículo inválido.");
 }
@@ -13,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $movil   = (int)($_POST['movil'] ?? 0);
     $marca   = strtoupper(trim($_POST['marca'] ?? ''));
     $modelo  = strtoupper(trim($_POST['modelo'] ?? ''));
+    $color   = strtoupper(trim($_POST['color'] ?? ''));
     $dominio = strtoupper(trim($_POST['dominio'] ?? ''));
     $tipo    = $_POST['tipo'] ?? 'TAXI';
 
@@ -23,7 +30,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die("<script>alert('Marca, modelo y dominio son obligatorios.'); window.history.back();</script>");
     }
 
-    // Verificar que el móvil no esté en uso por otro vehículo
     $check = $con->prepare("SELECT id FROM vehiculos WHERE movil = ? AND id != ?");
     $check->bind_param("ii", $movil, $id);
     $check->execute();
@@ -32,8 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $check->close();
 
-    $stmt = $con->prepare("UPDATE vehiculos SET movil=?, marca=?, modelo=?, dominio=?, tipo=? WHERE id=?");
-    $stmt->bind_param("issssi", $movil, $marca, $modelo, $dominio, $tipo, $id);
+    $stmt = $con->prepare("UPDATE vehiculos SET movil=?, marca=?, modelo=?, color=?, dominio=?, tipo=? WHERE id=?");
+    $stmt->bind_param("isssssi", $movil, $marca, $modelo, $color, $dominio, $tipo, $id);
 
     if ($stmt->execute()) {
         echo "<script>alert('✅ Vehículo actualizado.'); window.location='vehiculo_lista.php';</script>";
@@ -52,12 +58,13 @@ $stmt->close();
 
 if (!$vehiculo) die("Vehículo no encontrado.");
 
-// Saber si está asignado (para mostrar aviso)
 $stmt = $con->prepare("SELECT COUNT(*) AS cant FROM asignaciones_auto WHERE vehiculo_id = ? AND activa = 1");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $asignaciones_activas = (int)$stmt->get_result()->fetch_assoc()['cant'];
 $stmt->close();
+
+$color_actual = $vehiculo['color'] ?? '';
 ?>
 
 <!doctype html>
@@ -212,23 +219,28 @@ $stmt->close();
         <form method="POST">
             <div class="card-section">
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label>Número de móvil <span style="color:#dc3545;">*</span></label>
                             <input type="number" name="movil" class="form-control" min="1" max="9999" value="<?php echo htmlspecialchars($vehiculo['movil']); ?>" required>
-                            <small class="text-muted">Podés cambiarlo mientras no exista otro vehículo con ese número.</small>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label>Marca <span style="color:#dc3545;">*</span></label>
                             <input type="text" name="marca" class="form-control" value="<?php echo htmlspecialchars($vehiculo['marca']); ?>" required>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label>Modelo <span style="color:#dc3545;">*</span></label>
                             <input type="text" name="modelo" class="form-control" value="<?php echo htmlspecialchars($vehiculo['modelo']); ?>" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Color</label>
+                            <input type="text" name="color" class="form-control" value="<?php echo htmlspecialchars($color_actual); ?>" placeholder="Ej: BLANCO" maxlength="20">
                         </div>
                     </div>
                 </div>
@@ -246,6 +258,7 @@ $stmt->close();
                                 <option value="TAXI" <?php echo ($vehiculo['tipo'] === 'TAXI') ? 'selected' : ''; ?>>TAXI</option>
                                 <option value="REMIS" <?php echo ($vehiculo['tipo'] === 'REMIS') ? 'selected' : ''; ?>>REMIS</option>
                                 <option value="ALQUILER" <?php echo ($vehiculo['tipo'] === 'ALQUILER') ? 'selected' : ''; ?>>AUTO DE ALQUILER</option>
+                                <option value="BASE" <?php echo ($vehiculo['tipo'] === 'BASE') ? 'selected' : ''; ?>>BASE</option>
                             </select>
                         </div>
                     </div>

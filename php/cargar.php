@@ -8,7 +8,7 @@ $con->set_charset("utf8mb4");
 
 // === CAPTURAR TIPO (con respaldo en sesión) ===
 $tipo_filtro = $_GET['tipo'] ?? '';
-$tipos_validos = ['TAXI', 'REMIS', 'ALQUILER'];
+$tipos_validos = ['TAXI', 'REMIS', 'ALQUILER', 'BASE'];
 
 if (!in_array($tipo_filtro, $tipos_validos)) {
     // No vino por URL → usar lo que haya en sesión
@@ -778,8 +778,7 @@ foreach ($movs_caja_dia as $m) {
             <div class="aviso-a-favor"><i class="fas fa-check-circle"></i><span>💰 Este chofer tiene <strong>$<?php echo number_format($saldo_a_favor, 2, ',', '.'); ?></strong> a favor.</span></div>
         <?php endif; ?>
 
-        <form id="formulario" action="guarda_importes.php" method="post" enctype="multipart/form-data">
-            <input type="hidden" name="turno" value="<?php echo htmlspecialchars($turno); ?>">
+        <form id="formulario" action="guarda_importes.php?tipo=<?php echo urlencode($tipo_filtro); ?>" method="post" enctype="multipart/form-data"> <input type="hidden" name="turno" value="<?php echo htmlspecialchars($turno); ?>">
             <input type="hidden" name="movil" value="<?php echo htmlspecialchars($movil); ?>">
             <input type="hidden" name="chofer_id" value="<?php echo htmlspecialchars($chofer_id); ?>">
             <input type="hidden" name="vehiculo_id" value="<?php echo htmlspecialchars($vehiculo_id); ?>">

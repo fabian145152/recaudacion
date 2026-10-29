@@ -2,6 +2,8 @@
 require_once __DIR__ . '/funciones/auth.php';
 requireLogin();
 
+
+
 include_once "funciones/funciones.php";
 $con = conexion();
 
@@ -581,6 +583,10 @@ $es_ayer = ($fecha_filtro === date('Y-m-d', strtotime('-1 day')));
             background: linear-gradient(135deg, #6f42c1, #6610f2);
         }
 
+        .tipo-base {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 1.3rem;
@@ -824,7 +830,7 @@ $es_ayer = ($fecha_filtro === date('Y-m-d', strtotime('-1 day')));
     <div class="modal-tipo-overlay" id="modalTipoVehiculo">
         <div class="modal-tipo-box">
             <div class="modal-tipo-header">
-                <h3><i class="fas fa-car"></i> ¿Qué tipo de vehículo vas a recaudar?</h3>
+                <h3><i class="fas fa-car"></i> ¿Qué tipo de vehículo vas a gestionar?</h3>
                 <button class="modal-tipo-close" onclick="cerrarModalTipo()">&times;</button>
             </div>
             <div class="modal-tipo-body">
@@ -834,7 +840,7 @@ $es_ayer = ($fecha_filtro === date('Y-m-d', strtotime('-1 day')));
                         <h4>TAXI</h4>
                         <p>Cargar recaudación de taxis</p>
                     </a>
-                    <a href="javascript:void(0)" onclick="abrirTipo('REMIS')" class="tipo-card tipo-remis">
+                    <a href="" onclick="abrirTipo('REMIS')" class="tipo-card tipo-remis">
                         <i class="fas fa-car"></i>
                         <h4>REMIS</h4>
                         <p>Cargar recaudación de remises</p>
@@ -843,6 +849,11 @@ $es_ayer = ($fecha_filtro === date('Y-m-d', strtotime('-1 day')));
                         <i class="fas fa-car-side"></i>
                         <h4>AUTO DE ALQUILER</h4>
                         <p>Cargar recaudación de autos de alquiler</p>
+                    </a>
+                    <!-- NUEVO: BASE -->
+                    <a href="" onclick="abrirTipo('BASE')" class="tipo-card tipo-base">
+                        <i class="fas fa-warehouse"></i>
+                        <h4>AUTOS DE BASE</h4>
                     </a>
                 </div>
             </div>

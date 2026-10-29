@@ -1,33 +1,29 @@
 <?php
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 include_once "../funciones/funciones.php";
 $con = conexion();
 $con->set_charset("utf8mb4");
 
-// === ¿FUE ABIERTO EN NUEVA PESTAÑA? ===
-$es_nueva_pestana = isset($_GET['nueva']) && $_GET['nueva'] == '1';
-$param_nueva = $es_nueva_pestana ? '&nueva=1' : '';
-
 // === FILTRO DE TIPO DE VEHÍCULO (con respaldo en sesión) ===
 $tipo_filtro = $_GET['tipo'] ?? '';
-$tipos_validos = ['TAXI', 'REMIS', 'ALQUILER'];
+$tipos_validos = ['TAXI', 'REMIS', 'ALQUILER', 'BASE'];
 
-// Caso 1: piden quitar el filtro explícitamente
 if ($tipo_filtro === 'todos') {
     unset($_SESSION['tipo_filtro_actual']);
     $tipo_filtro = '';
-}
-// Caso 2: vino un tipo válido por URL → lo guardamos en sesión
-elseif (in_array($tipo_filtro, $tipos_validos)) {
+} elseif (in_array($tipo_filtro, $tipos_validos)) {
     $_SESSION['tipo_filtro_actual'] = $tipo_filtro;
-}
-// Caso 3: no vino por URL pero hay uno guardado → lo usamos
-elseif (isset($_SESSION['tipo_filtro_actual']) && in_array($_SESSION['tipo_filtro_actual'], $tipos_validos)) {
+} elseif (isset($_SESSION['tipo_filtro_actual']) && in_array($_SESSION['tipo_filtro_actual'], $tipos_validos)) {
     $tipo_filtro = $_SESSION['tipo_filtro_actual'];
-}
-// Caso 4: no hay nada
-else {
+} else {
     $tipo_filtro = '';
 }
+
+
 
 // === FILTRO DE FECHA ===
 $fecha_filtro = $_GET['fecha'] ?? date('Y-m-d');
@@ -182,9 +178,10 @@ $con->close();
 
 // Configuración visual según el tipo seleccionado
 $config_tipo = [
-    'TAXI' => ['bg' => 'linear-gradient(135deg, #ffc107, #fd7e14)', 'texto' => '#856404', 'icono' => 'fa-taxi'],
-    'REMIS' => ['bg' => 'linear-gradient(135deg, #17a2b8, #0dcaf0)', 'texto' => '#004085', 'icono' => 'fa-car'],
+    'TAXI'     => ['bg' => 'linear-gradient(135deg, #ffc107, #fd7e14)', 'texto' => '#856404', 'icono' => 'fa-taxi'],
+    'REMIS'    => ['bg' => 'linear-gradient(135deg, #17a2b8, #0dcaf0)', 'texto' => '#004085', 'icono' => 'fa-car'],
     'ALQUILER' => ['bg' => 'linear-gradient(135deg, #6f42c1, #6610f2)', 'texto' => '#383d41', 'icono' => 'fa-car-side'],
+    'BASE'     => ['bg' => 'linear-gradient(135deg, #28a745, #20c997)', 'texto' => '#155724', 'icono' => 'fa-warehouse'],
 ];
 $c_tipo = $tipo_filtro !== '' ? $config_tipo[$tipo_filtro] : null;
 ?>

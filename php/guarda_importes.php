@@ -39,14 +39,12 @@ $chofer_id    = (int)($_POST['chofer_id'] ?? 0);
 $vehiculo_id  = (int)($_POST['vehiculo_id'] ?? 0);
 $fecha        = limpiar($_POST['fecha'] ?? date("Y-m-d"));
 $sin_auto     = isset($_POST['sin_auto']) && $_POST['sin_auto'] === '1';
-// Leer tipo del POST, o de sesión como respaldo
-$tipo_filtro = $_POST['tipo'] ?? '';
-$tipos_validos = ['TAXI', 'REMIS', 'ALQUILER'];
+
+// === CAPTURAR TIPO DE VEHÍCULO (GET > POST > SESSION) ===
+$tipo_filtro = $_GET['tipo'] ?? $_POST['tipo'] ?? $_SESSION['tipo_filtro_actual'] ?? '';
+$tipos_validos = ['TAXI', 'REMIS', 'ALQUILER', 'BASE'];
 if (!in_array($tipo_filtro, $tipos_validos)) {
-    $tipo_filtro = $_SESSION['tipo_filtro_actual'] ?? '';
-    if (!in_array($tipo_filtro, $tipos_validos)) {
-        $tipo_filtro = '';
-    }
+    $tipo_filtro = '';
 }
 
 $observaciones = trim($_POST['observaciones'] ?? '');
@@ -118,7 +116,6 @@ if ($foto) {
 
 $con->begin_transaction();
 try {
-    // === INSERT / UPDATE ===
     $stmt = $con->prepare("
         INSERT INTO recauda 
         (fecha, chofer_id, vehiculo_id, movil, turno, abono_diario, paga, voucher, porcent, comision, total, mp, ft, debe, observaciones, registrado_por, registrado_fecha)
@@ -164,7 +161,6 @@ try {
     }
     $stmt->close();
 
-    // === OBTENER ID ===
     $stmt = $con->prepare("SELECT id FROM recauda WHERE fecha = ? AND chofer_id = ? LIMIT 1");
     if (!$stmt) {
         throw new Exception("Error al buscar el ID: " . $con->error);
@@ -177,7 +173,6 @@ try {
     if (!$row) throw new Exception("No se encontró la recauda recién guardada.");
     $recauda_id = (int)$row['id'];
 
-    // === ACTUALIZAR CUENTA CORRIENTE ===
     $stmt = $con->prepare("SELECT id FROM cuenta_corriente WHERE chofer_id = ? AND fecha = ? AND (tipo = 'DEUDA' OR tipo = 'A CUENTA')");
     $stmt->bind_param("is", $chofer_id, $fecha);
     $stmt->execute();
@@ -224,16 +219,8 @@ try {
     $nombre_chofer = $row_chofer ? $row_chofer['nombre'] : 'Desconocido';
     $stmt_nombre->close();
 
-    // === CONSTRUIR REDIRECT CON TIPO PRESERVADO ===
     $nueva_redirect = (isset($_POST['nueva']) && $_POST['nueva'] == '1') ? '&nueva=1' : '';
-    // Redirect con tipo preservado: POST > sesión > nada
-    $tipo_para_redirect = $tipo_filtro;
-    if (!in_array($tipo_para_redirect, ['TAXI', 'REMIS', 'ALQUILER'])) {
-        $tipo_para_redirect = $_SESSION['tipo_filtro_actual'] ?? '';
-    }
-    $tipo_redirect = in_array($tipo_para_redirect, ['TAXI', 'REMIS', 'ALQUILER'])
-        ? '&tipo=' . urlencode($tipo_para_redirect)
-        : '';
+    $tipo_redirect = $tipo_filtro ? '&tipo=' . urlencode($tipo_filtro) : '';
     $fecha_url = urlencode($fecha);
     $fmt_deposito = number_format($deposito, 2, ',', '.');
     $fmt_abono = number_format($abono_diario, 2, ',', '.');
@@ -242,7 +229,7 @@ try {
     $msj = $modo_edicion ? 'Importes corregidos' : 'Datos guardados';
     $texto_obs = !empty($observaciones) ? "\\nObservaciones: " . addslashes($observaciones) : "";
 
-    echo "<script>
+    echo "<script>    
         var confirmar = confirm('✅ $msj correctamente.\\n\\nFecha: $fecha_mostrar\\nChofer: $nombre_chofer\\nAbono esperado: \\$$fmt_abono\\nTotal Depositado: \\$$fmt_deposito$texto_obs\\n\\n¿Confirmás que los datos son correctos?');
         if (confirmar) {
             window.location='cargar_selector.php?fecha=$fecha_url$nueva_redirect$tipo_redirect';
